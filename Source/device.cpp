@@ -947,11 +947,10 @@ double Device::computeFittedValue(double current)
 double  Device::computeFittedValueInverse(double current)
 {
     // Quadratic coefficients from the fitted model
-    const double a = -4.1471e-6;
-    const double b = 0.8458;
-    const double c = 3.1355;
-
-    return a * current * current + b * current + c;
+    const double a = 9.58636195e-06;
+    const double b = 1.17902637;
+    const double c = 3.34474657;
+    return a*current*current + b*current + c;
 //    const double a = 1.4149e-5;
 //    const double b = 1.1733;
 //    const double c = -2.0508;

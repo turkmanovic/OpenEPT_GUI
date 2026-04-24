@@ -40,6 +40,7 @@ OpenEPT::OpenEPT(QString aWorkspacePath, QWidget *parent)
 
     workspacePath = aWorkspacePath;
 
+
  }
 
 OpenEPT::~OpenEPT()

@@ -98,7 +98,8 @@ bool OpenEPT::addNewDevice(QString aIpAddress, QString aPort)
     /* Create corresponding device window*/
     DeviceWnd *tmpdeviceWnd = new DeviceWnd(0);
     tmpdeviceWnd->setWindowTitle(deviceName);
-    tmpdeviceWnd->setDeviceState(DEVICE_STATE_CONNECTED);
+    tmpdeviceWnd->setDeviceNetworkState(DEVICE_STATE_CONNECTED);
+    tmpdeviceWnd->setParameters(tmpDevice->parameters());
     //tmpdeviceWnd->setWorkingSpaceDir(workspacePath);
 
     /* Create device container */

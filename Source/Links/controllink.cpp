@@ -107,6 +107,16 @@ bool                    ControlLink::executeCommand(QString command, QString* re
     *response = (*response).split("\r\n")[0];
     return true;
 }
+
+QString ControlLink::getDeviceIP_Addr()
+{
+    return ipAddress;
+}
+
+quint16 ControlLink::getDeviceIP_Port()
+{
+    return portNumber;
+}
 bool   ControlLink::setSocketKeepAlive()
 {
     char enableKeepAlive = 1;

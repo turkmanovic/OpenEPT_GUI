@@ -5,12 +5,13 @@
 #include <QButtonGroup>
 #include <QAbstractButton>
 #include "Windows/Plot/plot.h"
-#include "Windows/Device/advanceconfigurationwnd.h"
 #include "Windows/Console/consolewnd.h"
 #include "Windows/Device/advcofigurationdata.h"
 #include "Windows/Device/datastatistics.h"
 #include "Windows/Device/calibrationwnd.h"
 #include "Windows/Device/energycontrolwnd.h"
+#include "Windows/Device/configurationwnd.h"
+#include "Processing/Parameters/deviceparameters.h"
 
 #define     DEVICEWND_DEFAULT_MAX_NUMBER_OF_BUFFERS 100
 #define     DEVICEWND_DEFAULT_MAX_NUMBER_OF_SAMPLES 250
@@ -21,6 +22,13 @@ typedef enum
     DEVICE_STATE_DISCONNECTED,
     DEVICE_STATE_UNDEFINED
 }device_state_t;
+
+typedef enum
+{
+    DEVICE_ACQ_ACTIVE,
+    DEVICE_ACQ_PAUSE,
+    DEVICE_ACQ_UNDEFINED
+}device_acq_mode_t;
 
 typedef enum
 {
@@ -76,20 +84,12 @@ public:
     ~DeviceWnd();
 
     QPlainTextEdit* getLogWidget();
-    void            setDeviceState(device_state_t aDeviceState);
+    void            setParameters(DeviceParameters* params);
+    void            setDeviceNetworkState(device_state_t aDeviceState);
+    void            setDeviceAcqState(device_acq_mode_t aAcqState);
     void            printConsoleMsg(QString msg, bool exeStatus);
     void            setDeviceInterfaceSelectionState(device_interface_selection_state_t selectionState=DEVICE_INTERFACE_SELECTION_STATE_UNDEFINED);
-    void            setDeviceMode(device_mode_t mode=DEVICE_MODE_INTERNAL);
-    bool            setAdc(QString adc);
-    bool            setChSamplingTime(QString sTime);
-    bool            setChAvgRatio(QString avgRatio);
-    bool            setClkDiv(QString clkDiv);
-    bool            setResolution(QString resolution);
     bool            setSamplingPeriod(QString stime);
-    bool            setADCClk(QString adcClk);
-    bool            setInCkl(QString inClk);
-    bool            setCOffset(QString coffset);
-    bool            setVOffset(QString voffset);
     bool            setLoadState(bool state);
     bool            setPPathState(bool state);
     bool            setBatState(bool state);
@@ -116,9 +116,6 @@ public:
     void            setStatisticsData(double dropRate, unsigned int dropPacketsNo, unsigned int fullReceivedBuffersNo, unsigned int lastBufferID);
     void            setStatisticsSamplingTime(double stime);
     void            setStatisticsElapsedTime(int elapsedTime);
-
-    void            setConsumptionType(device_consumption_type_t actype);
-    void            setMeasurementType(device_measurement_type_t amtype);
 
     bool            plotVoltageValues(QVector<double> values, QVector<double> keys);
     bool            plotCurrentValues(QVector<double> values, QVector<double> keys);
@@ -190,10 +187,6 @@ public slots:
     void            onConsolePressed();
     void            onDataAnalyzerPressed();
     void            onSetConsumptionName();
-    void            onResolutionChanged(QString aResolution);
-    void            onADCChanged(QString adc);
-    void            onClockDivChanged(QString aClockDiv);
-    void            onSampleTimeChanged(QString aSTime);
     void            onSamplingPeriodChanged();
     void            onInterfaceChanged(QString interfaceInfo);
     void            onAdvConfigurationChanged(QVariant aConfig);
@@ -218,10 +211,6 @@ public slots:
 
     void            onConsumptionProfileNameChanged();
 
-    void            onConsumptionTypeChanged(QAbstractButton* button);
-    void            onMeasurementTypeChanged(QAbstractButton* button);
-
-
     void            onAdvanceConfigurationButtonPressed(bool pressed);
 
     void            onCalibrationButtonPressed(bool pressed);
@@ -238,7 +227,7 @@ private slots:
 private:
     Ui::DeviceWnd               *ui;
 
-    AdvanceConfigurationWnd     *advanceConfigurationWnd;
+    ConfigurationWnd            *configurationWnd;
 
     ConsoleWnd                  *consoleWnd;
     DataStatistics              *dataAnalyzer;
@@ -266,6 +255,7 @@ private:
     /* */
     device_state_t                      deviceState;
     device_interface_selection_state_t  interfaceState;
+    device_acq_mode_t                   acqState;
 
     /* */
     void                        setDeviceStateDisconnected();
@@ -275,11 +265,9 @@ private:
 
     QButtonGroup*               consumptionTypeSelection;
     QButtonGroup*               measurementTypeSelection;
-
-    device_measurement_type_t   mType;
-    device_consumption_type_t   cType;
-
     QString                     wsPath;
+
+    DeviceParameters           *m_param;
 };
 
 #endif // DEVICEWND_H

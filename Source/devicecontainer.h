@@ -23,16 +23,9 @@ signals:
 
 public slots:
     void    onConsoleWndMessageRcvd(QString msg);
-    void    onDeviceWndResolutionChanged(QString resolution);
     void    onDeviceWndSamplesNoChanged(unsigned int newSamplesNo);
-    void    onDeviceWndADCChanged(QString adc);
-    void    onDeviceWndClockDivChanged(QString clockDiv);
-    void    onDeviceWndChannelSamplingTimeChanged(QString stime);
     void    onDeviceWndSamplingPeriodChanged(QString time);
     void    onDeviceWndInterfaceChanged(QString interfaceIp);
-    void    onDeviceWndAvrRatioChanged(QString avgRatio);
-    void    onDeviceWndVOffsetChanged(QString off);
-    void    onDeviceWndCOffsetChanged(QString off);
 
 
 
@@ -66,14 +59,7 @@ public slots:
     void    onDeviceStatusLinkNewDeviceAdded(QString aDeviceIP);
     void    onDeviceStatusLinkNewMessageReceived(QString aDeviceIP, QString aMessage);
     void    onDeviceHandleControlMsgResponse(QString msg, bool exeStatus);
-    void    onDeviceResolutionObtained(QString resolution);
-    void    onDeviceClkDivObtained(QString clkDiv);
-    void    onDeviceChSampleTimeObtained(QString stime);
     void    onDeviceSamplingPeriodObtained(QString stime);
-    void    onDeviceAdcInClkObtained(QString inClk);
-    void    onDeviceAvgRatioChanged(QString aAvgRatio);
-    void    onDeviceCOffsetObtained(QString coffset);
-    void    onDeviceVOffsetObtained(QString voffset);
     void    onDeviceSamplingTimeChanged(double value);
     void    onDeviceLoadStateObtained(bool state);
     void    onDeviceBatStateObtained(bool state);

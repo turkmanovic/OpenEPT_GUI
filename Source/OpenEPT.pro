@@ -22,6 +22,8 @@ SOURCES += \
     Links/edlink.cpp \
     Links/statuslink.cpp \
     Links/streamlink.cpp \
+    Processing/Parameters/deviceparamdefs.cpp \
+    Processing/Parameters/deviceparameters.cpp \
     Processing/calibrationdata.cpp \
     Processing/charginganalysis.cpp \
     Processing/dataprocessing.cpp \
@@ -31,8 +33,8 @@ SOURCES += \
     Windows/AddDevice/adddevicewnd.cpp \
     Windows/Console/consolewnd.cpp \
     Windows/DataAnalyzer/dataanalyzer.cpp \
-    Windows/Device/advanceconfigurationwnd.cpp \
     Windows/Device/calibrationwnd.cpp \
+    Windows/Device/configurationwnd.cpp \
     Windows/Device/datastatistics.cpp \
     Windows/Device/devicewnd.cpp \
     Windows/Device/energycontrolwnd.cpp \
@@ -49,6 +51,8 @@ HEADERS += \
     Links/edlink.h \
     Links/statuslink.h \
     Links/streamlink.h \
+    Processing/Parameters/deviceparamdefs.h \
+    Processing/Parameters/deviceparameters.h \
     Processing/calibrationdata.h \
     Processing/charginganalysis.h \
     Processing/dataprocessing.h \
@@ -59,8 +63,8 @@ HEADERS += \
     Windows/AddDevice/adddevicewnd.h \
     Windows/Console/consolewnd.h \
     Windows/DataAnalyzer/dataanalyzer.h \
-    Windows/Device/advanceconfigurationwnd.h \
     Windows/Device/calibrationwnd.h \
+    Windows/Device/configurationwnd.h \
     Windows/Device/datastatistics.h \
     Windows/Device/devicewnd.h \
     Windows/Device/energycontrolwnd.h \
@@ -74,8 +78,8 @@ FORMS += \
     Windows/AddDevice/adddevicewnd.ui \
     Windows/Console/consolewnd.ui \
     Windows/DataAnalyzer/dataanalyzer.ui \
-    Windows/Device/advanceconfigurationwnd.ui \
     Windows/Device/calibrationwnd.ui \
+    Windows/Device/configurationwnd.ui \
     Windows/Device/datastatistics.ui \
     Windows/Device/devicewnd.ui \
     Windows/Device/energycontrolwnd.ui \

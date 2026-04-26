@@ -11,6 +11,7 @@
 #include "Processing/epprocessing.h"
 #include "Processing/calibrationdata.h"
 #include "Processing/charginganalysis.h"
+#include "Processing/Parameters/deviceparameters.h"
 
 /* Resolution sample time offset based on STM32H755ZI offset */
 #define     DEVICE_ADC_RESOLUTION_16BIT_STIME_OFFSET    8.5
@@ -85,6 +86,7 @@ public:
     explicit Device(QObject *parent = nullptr);
     ~Device();
 
+    DeviceParameters *parameters() const;
     bool        acquisitionStart();
     bool        acquisitionStop();
     bool        acquisitionPause();
@@ -209,7 +211,7 @@ private slots:
     void        onNewEBPFull(double value, double key, QString name);
     void        onChargingStatusChanged(charginganalysis_status_t status);
 private:
-    QString                         deviceName;
+    //QString                         deviceName;
     double                          samplingPeriod;                //ms
     device_adc_resolution_t         adcResolution;
     device_adc_ch_sampling_time_t   adcChSamplingTime;
@@ -250,7 +252,7 @@ private:
     float                          chargerTermVoltage; //V
 
     /*This should be removed when stream link is defined*/
-    int                             streamID;
+    //int                             streamID;
 
     /**/
     bool                            epEnabled;
@@ -260,6 +262,9 @@ private:
 
     /**/
     unsigned int                    samplesNo;
+
+    /**/
+    DeviceParameters                *m_params;
 
 };
 

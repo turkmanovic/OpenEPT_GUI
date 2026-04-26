@@ -46,7 +46,7 @@ DataProcessing::DataProcessing(QObject *parent)
     minMax.resize(2);
 
     setAcquisitionStatus(DATAPROCESSING_ACQUISITION_STATUS_INACTIVE);
-    setConsumptionMode(DATAPROCESSING_CONSUMPTION_MODE_CURRENT);
+    setConsumptionMode(DATAPROCESSING_CONSUMPTION_MODE_CUMULATIVE);
     setMeasurementMode(DATAPROCESSING_MEASUREMENT_MODE_VOLTAGE);
 }
 

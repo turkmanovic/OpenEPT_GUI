@@ -28,6 +28,7 @@ private slots:
     void onDeviceContainerDeviceWndClosed(Device* aDevice);
     void onDeviceContainerAllDeviceWndClosed();
     void onActionOpenAndProcessData();
+    void onActionAppSettings();
 
 
 private:

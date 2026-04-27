@@ -37,9 +37,9 @@ OpenEPT::OpenEPT(QString aWorkspacePath, QWidget *parent)
 
     connect(ui->actionAddSingleDevice, &QAction::triggered, this,  &OpenEPT::onActionAddSingleDeviceTriggered);
     connect(ui->actionDataAnalyzer, &QAction::triggered, this,  &OpenEPT::onActionOpenAndProcessData);
+    connect(ui->actionApplicationSettings, &QAction::triggered, this,  &OpenEPT::onActionAppSettings);
 
     workspacePath = aWorkspacePath;
-
 
  }
 
@@ -163,6 +163,11 @@ void OpenEPT::onDeviceContainerAllDeviceWndClosed()
 void OpenEPT::onActionOpenAndProcessData()
 {
     dataAnalyzerWnd->show();
+}
+
+void OpenEPT::onActionAppSettings()
+{
+
 }
 
 

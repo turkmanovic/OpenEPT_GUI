@@ -478,6 +478,10 @@ void DeviceWnd::setDeviceInterfaceSelectionState(device_interface_selection_stat
         ui->consNamePusb->setEnabled(false);
         ui->samplesNoLine->setEnabled(false);
         ui->streamServerInterfComb->setEnabled(true);
+        ui->startPusb->setEnabled(false);
+        ui->pausePusb->setEnabled(false);
+        ui->stopPusb->setEnabled(false);
+        ui->refreshPusb->setEnabled(false);
         break;
     case DEVICE_INTERFACE_SELECTION_STATE_SELECTED:
         ui->EPControlEnableCheb->setEnabled(true);
@@ -492,6 +496,10 @@ void DeviceWnd::setDeviceInterfaceSelectionState(device_interface_selection_stat
         ui->dischargeControlPusb2->setEnabled(true);
         ui->consNamePusb->setEnabled(true);
         ui->streamServerInterfComb->setEnabled(false);
+        ui->startPusb->setEnabled(true);
+        ui->pausePusb->setEnabled(true);
+        ui->stopPusb->setEnabled(true);
+        ui->refreshPusb->setEnabled(true);
         break;
     }
     interfaceState = selectionState;

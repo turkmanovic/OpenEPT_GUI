@@ -34,6 +34,7 @@
        <font>
         <family>Arial</family>
         <pointsize>11</pointsize>
+        <weight>75</weight>
         <bold>true</bold>
        </font>
       </property>
@@ -86,13 +87,14 @@
      <x>0</x>
      <y>0</y>
      <width>735</width>
-     <height>22</height>
+     <height>23</height>
     </rect>
    </property>
    <property name="font">
     <font>
      <family>Arial</family>
      <pointsize>11</pointsize>
+     <weight>50</weight>
      <bold>false</bold>
     </font>
    </property>
@@ -135,6 +137,7 @@
    <addaction name="actionAddSingleDevice"/>
    <addaction name="actionAddMultipleDevices"/>
    <addaction name="actionDataAnalyzer"/>
+   <addaction name="separator"/>
   </widget>
   <action name="actionAddMultipleDevices">
    <property name="icon">
@@ -164,6 +167,18 @@
    </property>
    <property name="toolTip">
     <string>Open and analyze consumption profile</string>
+   </property>
+  </action>
+  <action name="actionApplicationSettings">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/NewSet/setting.png</normaloff>:/images/NewSet/setting.png</iconset>
+   </property>
+   <property name="text">
+    <string>ApplicationSettings</string>
+   </property>
+   <property name="toolTip">
+    <string>Application Settings</string>
    </property>
   </action>
  </widget>

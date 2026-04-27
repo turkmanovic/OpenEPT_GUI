@@ -1,7 +1,7 @@
 #include <QMessageBox>
 #include "devicecontainer.h"
 
-DeviceContainer::DeviceContainer(QObject *parent,  DeviceWnd* aDeviceWnd, Device* aDevice, QString aWsPath)
+DeviceContainer::DeviceContainer(QObject *parent,  DeviceWnd* aDeviceWnd, Device* aDevice, ApplicationParameters* appParam)
     : QObject{parent}
 {
     deviceWnd       = aDeviceWnd;
@@ -9,7 +9,7 @@ DeviceContainer::DeviceContainer(QObject *parent,  DeviceWnd* aDeviceWnd, Device
     log             = new Log();
     fileProcessing  = new FileProcessing();
     log->assignLogWidget(deviceWnd->getLogWidget());
-    wsPath          = aWsPath;
+    m_AppParamsRef  = appParam;
     consumptionProfileName = "";
     consumptionProfileNameSet = false;
     consumptionProfileNameExists = false;
@@ -27,22 +27,13 @@ DeviceContainer::DeviceContainer(QObject *parent,  DeviceWnd* aDeviceWnd, Device
     connect(deviceWnd,  SIGNAL(sigSaveToFileEnabled(bool)),                         this, SLOT(onDeviceWndSaveToFileChanged(bool)));
     connect(deviceWnd,  SIGNAL(sigEPEnable(bool)),                                  this, SLOT(onDeviceWndEPEnable(bool)));
     connect(deviceWnd,  SIGNAL(sigNewControlMessageRcvd(QString)),                  this, SLOT(onConsoleWndMessageRcvd(QString)));
-    connect(deviceWnd,  SIGNAL(sigADCChanged(QString)),                             this, SLOT(onDeviceWndADCChanged(QString)));
-    connect(deviceWnd,  SIGNAL(sigResolutionChanged(QString)),                      this, SLOT(onDeviceWndResolutionChanged(QString)));
-    connect(deviceWnd,  SIGNAL(sigClockDivChanged(QString)),                        this, SLOT(onDeviceWndClockDivChanged(QString)));
     connect(deviceWnd,  SIGNAL(sigSamplesNoChanged(unsigned int)),                  this, SLOT(onDeviceWndSamplesNoChanged(unsigned int)));
-    connect(deviceWnd,  SIGNAL(sigSampleTimeChanged(QString)),                      this, SLOT(onDeviceWndChannelSamplingTimeChanged(QString)));
     connect(deviceWnd,  SIGNAL(sigSamplingPeriodChanged(QString)),                  this, SLOT(onDeviceWndSamplingPeriodChanged(QString)));
-    connect(deviceWnd,  SIGNAL(sigAvrRatioChanged(QString)),                        this, SLOT(onDeviceWndAvrRatioChanged(QString)));
-    connect(deviceWnd,  SIGNAL(sigVOffsetChanged(QString)),                         this, SLOT(onDeviceWndVOffsetChanged(QString)));
-    connect(deviceWnd,  SIGNAL(sigCOffsetChanged(QString)),                         this, SLOT(onDeviceWndCOffsetChanged(QString)));
     connect(deviceWnd,  SIGNAL(sigNewInterfaceSelected(QString)),                   this, SLOT(onDeviceWndInterfaceChanged(QString)));
     connect(deviceWnd,  SIGNAL(sigStartAcquisition()),                              this, SLOT(onDeviceWndAcquisitionStart()));
     connect(deviceWnd,  SIGNAL(sigStopAcquisition()),                               this, SLOT(onDeviceWndAcquisitionStop()));
     connect(deviceWnd,  SIGNAL(sigPauseAcquisition()),                              this, SLOT(onDeviceWndAcquisitionPause()));
     connect(deviceWnd,  SIGNAL(sigRefreshAcquisition()),                            this, SLOT(onDeviceWndAcquisitionRefresh()));
-    connect(deviceWnd,  SIGNAL(sigAdvConfigurationReqested()),                      this, SLOT(onDeviceWndAdvConfGet()));
-    connect(deviceWnd,  SIGNAL(sigAdvConfigurationChanged(QVariant)),               this, SLOT(onDeviceWndNewConfiguration(QVariant)));
     connect(deviceWnd,  SIGNAL(sigMaxNumberOfBuffersChanged(uint)),                 this, SLOT(onDeviceWndMaxNumberOfBuffersChanged(uint)));
     connect(deviceWnd,  SIGNAL(sigConsumptionTypeChanged(QString)),                 this, SLOT(onDeviceWndConsumptionTypeChanged(QString)));
     connect(deviceWnd,  SIGNAL(sigMeasurementTypeChanged(QString)),                 this, SLOT(onDeviceWndMeasurementTypeChanged(QString)));
@@ -66,14 +57,7 @@ DeviceContainer::DeviceContainer(QObject *parent,  DeviceWnd* aDeviceWnd, Device
     connect(device,     SIGNAL(sigStatusLinkNewDeviceAdded(QString)),               this, SLOT(onDeviceStatusLinkNewDeviceAdded(QString)));
     connect(device,     SIGNAL(sigStatusLinkNewMessageReceived(QString,QString)),   this, SLOT(onDeviceStatusLinkNewMessageReceived(QString,QString)));
     connect(device,     SIGNAL(sigNewResponseReceived(QString, bool)),              this, SLOT(onDeviceHandleControlMsgResponse(QString, bool)));
-    connect(device,     SIGNAL(sigResolutionObtained(QString)),                     this, SLOT(onDeviceResolutionObtained(QString)));
-    connect(device,     SIGNAL(sigChSampleTimeObtained(QString)),                   this, SLOT(onDeviceChSampleTimeObtained(QString)));
-    connect(device,     SIGNAL(sigClockDivObtained(QString)),                       this, SLOT(onDeviceClkDivObtained(QString)));
     connect(device,     SIGNAL(sigSampleTimeObtained(QString)),                     this, SLOT(onDeviceSamplingPeriodObtained(QString)));
-    connect(device,     SIGNAL(sigAdcInputClkObtained(QString)),                    this, SLOT(onDeviceAdcInClkObtained(QString)));
-    connect(device,     SIGNAL(sigCOffsetObtained(QString)),                        this, SLOT(onDeviceCOffsetObtained(QString)));
-    connect(device,     SIGNAL(sigVOffsetObtained(QString)),                        this, SLOT(onDeviceVOffsetObtained(QString)));
-    connect(device,     SIGNAL(sigAvgRatio(QString)),                               this, SLOT(onDeviceAvgRatioChanged(QString)));
     connect(device,     SIGNAL(sigSamplingTimeChanged(double)),                     this, SLOT(onDeviceSamplingTimeChanged(double)));
     connect(device,     SIGNAL(sigAcqusitionStarted()),                             this, SLOT(onDeviceAcquisitonStarted()));
     connect(device,     SIGNAL(sigAcqusitionStopped()),                             this, SLOT(onDeviceAcquisitonStopped()));
@@ -104,6 +88,15 @@ DeviceContainer::DeviceContainer(QObject *parent,  DeviceWnd* aDeviceWnd, Device
     connect(device,     SIGNAL(sigChargingStatusChanged(charginganalysis_status_t)),
             this, SLOT(onDeviceMeasurementEnergyFlowStatusChanged(charginganalysis_status_t)));
 
+    connect(device, SIGNAL(sigUVoltageValueObtained(float)),
+            this, SLOT(onDeviceUVoltageValueObtained(float)));
+
+    connect(device, SIGNAL(sigOVoltageValueObtained(float)),
+            this, SLOT(onDeviceOVoltageValueObtained(float)));
+
+    connect(device, SIGNAL(sigOCurrentValueObtained(int)),
+            this, SLOT(onDeviceOCurrentValueObtained(int)));
+
 
 
 
@@ -112,9 +105,104 @@ DeviceContainer::DeviceContainer(QObject *parent,  DeviceWnd* aDeviceWnd, Device
     log->printLogMessage("Device container successfully created", LOG_MESSAGE_TYPE_INFO);
     device->statusLinkServerCreate();
     device->epLinkServerCreate();
+    fillDeviceSetFunctions();
+
+    connect(deviceWnd,
+            &DeviceWnd::sigDeviceConfigSet,
+            this,
+            &DeviceContainer::onDeviceConfigUpdated);
 
 }
+void DeviceContainer::fillDeviceSetFunctions()
+{
+    auto params = device->parameters();
 
+    /**************************************************************
+     * PROTECTION
+     **************************************************************/
+
+    {
+        auto &p = params->getParamRef("underVoltageValue");
+        p.setFn = [this](const QVariant& v){
+            return device->setUVoltageValue(v.toFloat());
+        };
+        p.getFn = [this](){
+            device->getUVoltageValue();
+        };
+    }
+
+    {
+        auto &p = params->getParamRef("overVoltageValue");
+        p.setFn = [this](const QVariant& v){
+            return device->setOVoltageValue(v.toFloat());
+        };
+        p.getFn = [this](){
+            device->getOVoltageValue();
+        };
+    }
+
+    {
+        auto &p = params->getParamRef("overCurrentValue");
+        p.setFn = [this](const QVariant& v){
+            return device->setOCurrentValue(v.toInt());
+        };
+        p.getFn = [this](){
+            device->getOCurrentValue();
+        };
+    }
+
+    /**************************************************************
+     * LOAD
+     **************************************************************/
+
+    {
+        auto &p = params->getParamRef("loadCurrent");
+        p.setFn = [this](const QVariant& v){
+            return device->setLoadCurrent(v.toInt());
+        };
+        p.getFn = [this](){
+            device->getLoadCurrent();
+        };
+    }
+
+    /**************************************************************
+     * CHARGER
+     **************************************************************/
+
+    {
+        auto &p = params->getParamRef("chargerCurrent");
+        p.setFn = [this](const QVariant& v){
+            return device->setChargerCurrent(v.toInt());
+        };
+        p.getFn = [this](){
+            device->getChargerCurrent();
+        };
+    }
+
+    {
+        auto &p = params->getParamRef("chargerTermVoltage");
+        p.setFn = [this](const QVariant& v){
+            return device->setChargerTermVoltage(v.toFloat());
+        };
+        p.getFn = [this](){
+            device->getChargerTermVoltage();
+        };
+    }
+
+    /**************************************************************
+     * ADC
+     **************************************************************/
+
+    {
+        auto &p = params->getParamRef("adcResolution");
+        p.setFn = [this](const QVariant& v){
+            return device->setResolution(static_cast<device_adc_resolution_t>(v.toInt()));
+        };
+        p.getFn = [this](){
+            device->getResolution();
+        };
+    }
+}
 DeviceContainer::~DeviceContainer()
 {
     delete deviceWnd;
@@ -216,14 +304,19 @@ void DeviceContainer::onDeviceWndMeasurementTypeChanged(QString aMeasurementType
 void DeviceContainer::onDeviceWndConsumptionProfileNameChanged(QString aConsumptionProfileName)
 {
     QString fullPath;
+    QString deviceName;
     if(consumptionProfileName == aConsumptionProfileName)
     {
         log->printLogMessage("Consumption profile " + consumptionProfileName+ " already exists", LOG_MESSAGE_TYPE_ERROR);
         return;
     }
-    consumptionProfileName = aConsumptionProfileName;
+    if(!device->getName(&deviceName))
+    {
+        log->printLogMessage("Unable to obtain device name", LOG_MESSAGE_TYPE_ERROR);
+    }
+    consumptionProfileName = aConsumptionProfileName ;
     consumptionProfileNameSet = true;
-    if(!createSubDir(consumptionProfileName, fullPath) )
+    if(!createSubDir(deviceName + "/" + consumptionProfileName, fullPath) )
     {
         log->printLogMessage("Consumption profile " + consumptionProfileName+ " already exists", LOG_MESSAGE_TYPE_WARNING);
         fileProcessing->open(FILEPROCESSING_TYPE_SAMPLES, fullPath);
@@ -343,7 +436,7 @@ void DeviceContainer::onDeviceWndSamplingPeriodChanged(QString time)
 void DeviceContainer::onDeviceWndInterfaceChanged(QString interfaceIp)
 {
     int streamID = -1;
-    if(!device->createStreamLink(interfaceIp, 11223, &streamID))
+    if(!device->createStreamLink(interfaceIp,&streamID))
     {
         log->printLogMessage("Unable to create stream link: ", LOG_MESSAGE_TYPE_ERROR);
         deviceWnd->setDeviceInterfaceSelectionState(DEVICE_INTERFACE_SELECTION_STATE_UNDEFINED);
@@ -367,7 +460,7 @@ void DeviceContainer::onDeviceWndInterfaceChanged(QString interfaceIp)
         }
         else
         {
-            log->printLogMessage("Status link ( port="+ QString::number(8818) + " ) sucessfully created: ", LOG_MESSAGE_TYPE_INFO);
+            log->printLogMessage("Status link ( port="+ device->parameters()->getParamValue("statusLinkPort") + " ) sucessfully created: ", LOG_MESSAGE_TYPE_INFO);
         }
     }
 }
@@ -497,7 +590,35 @@ void DeviceContainer::onDeviceSamplingPeriodObtained(QString stime)
         log->printLogMessage("Sampling time sucessfully obained and presented ", LOG_MESSAGE_TYPE_INFO);
     }
 }
+void DeviceContainer::onDeviceConfigUpdated(QMap<QString, QString> changedFields)
+{
+    auto params = device->parameters();
+    bool status = true;
+    for(auto it = changedFields.begin(); it != changedFields.end(); ++it)
+    {
+        const QString &key = it.key();
+        const QString &value = it.value();
 
+        if(!params->hasParam(key))
+        {
+            log->printLogMessage("Unknown param: " + key, LOG_MESSAGE_TYPE_WARNING);
+            continue;
+        }
+
+        auto &param = params->getParamRef(key);
+
+        if(param.setFn)
+        {
+            param.setFn(value);
+        }
+        else
+        {
+            log->printLogMessage("No setFn for param: " + key, LOG_MESSAGE_TYPE_WARNING);
+            status = false;
+        }
+    }
+    deviceWnd->setConfigurationAppliedStatus(status);
+}
 void DeviceContainer::onDeviceSamplingTimeChanged(double value)
 {
     deviceWnd->setStatisticsSamplingTime(value);
@@ -584,6 +705,40 @@ void DeviceContainer::onDeviceUVoltageObtained(bool state)
     else
     {
         log->printLogMessage("Under Voltage protection state sucessfully obained and presented ", LOG_MESSAGE_TYPE_INFO);
+    }
+}
+void DeviceContainer::onDeviceOVoltageValueObtained(float value)
+{
+    if(!deviceWnd->setOVoltageValue(value))
+    {
+        log->printLogMessage("Unable to obtain Over Voltage value", LOG_MESSAGE_TYPE_ERROR);
+    }
+    else
+    {
+        log->printLogMessage("Over Voltage value successfully obtained and presented", LOG_MESSAGE_TYPE_INFO);
+    }
+}
+void DeviceContainer::onDeviceOCurrentValueObtained(int value)
+{
+    if(!deviceWnd->setOCurrentValue(value))
+    {
+        log->printLogMessage("Unable to obtain Over Current value", LOG_MESSAGE_TYPE_ERROR);
+    }
+    else
+    {
+        log->printLogMessage("Over Current value successfully obtained and presented", LOG_MESSAGE_TYPE_INFO);
+    }
+}
+
+void DeviceContainer::onDeviceUVoltageValueObtained(float value)
+{
+    if(!deviceWnd->setUVoltageValue(value))
+    {
+        log->printLogMessage("Unable to obtain Under Voltage value", LOG_MESSAGE_TYPE_ERROR);
+    }
+    else
+    {
+        log->printLogMessage("Under Voltage value successfully obtained and presented", LOG_MESSAGE_TYPE_INFO);
     }
 }
 
@@ -869,6 +1024,7 @@ void DeviceContainer::onDeviceWndCalibrationUpdated()
 
 
 bool        DeviceContainer::createSubDir(const QString &subDirName, QString &fullPath) {
+    QString wsPath = m_AppParamsRef->getParamValue("workspacePath");
     QDir dir(wsPath);
 
     fullPath = wsPath + "/" + subDirName;
@@ -880,7 +1036,7 @@ bool        DeviceContainer::createSubDir(const QString &subDirName, QString &fu
     if (dir.exists(subDirName)) return false;
 
     // Try to create the subdirectory
-    if (!dir.mkdir(subDirName)) return false;
+    if (!dir.mkpath(subDirName)) return false;
 
     return true;
 }

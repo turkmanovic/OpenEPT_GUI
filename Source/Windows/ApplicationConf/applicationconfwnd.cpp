@@ -1,6 +1,5 @@
-#include "configurationwnd.h"
-#include "ui_configurationwnd.h"
-#include "Processing/Parameters/deviceparamdefs.h"
+#include "applicationconfwnd.h"
+#include "ui_applicationconfwnd.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -16,28 +15,26 @@
 #include <QSizePolicy>
 #include <QSignalBlocker>
 
-#define CONFIG_LABEL_WIDTH     150
-#define CONFIG_FIELD_WIDTH     170
-#define CONFIG_UNIT_WIDTH      40
-#define CONFIG_ROW_HEIGHT      28
-#define CONFIG_BUTTON_WIDTH    120
-#define CONFIG_BUTTON_HEIGHT   32
+#define APP_CONFIG_FIELD_WIDTH     170
+#define APP_CONFIG_UNIT_WIDTH      40
+#define APP_CONFIG_ROW_HEIGHT      28
+#define APP_CONFIG_BUTTON_WIDTH    120
+#define APP_CONFIG_BUTTON_HEIGHT   32
 
-ConfigurationWnd::ConfigurationWnd(QWidget *parent,
-                                   ParameterStore *params) :
+ApplicationConfWnd::ApplicationConfWnd(QWidget *parent,
+                                       ParameterStore *params) :
     QWidget(parent),
-    ui(new Ui::ConfigurationWnd),
+    ui(new Ui::ApplicationConfWnd),
     m_params(params),
     tabWidget(nullptr),
     configurationStatusLabel(nullptr),
     changedFieldsLabel(nullptr),
-    setConfigButton(nullptr),
-    acquireConfigButton(nullptr)
+    applyConfigButton(nullptr)
 {
     ui->setupUi(this);
 
-    setMinimumSize(900, 700);
-    resize(900, 700);
+    setMinimumSize(800, 600);
+    resize(800, 600);
 
     rebuildUi();
 
@@ -46,23 +43,26 @@ ConfigurationWnd::ConfigurationWnd(QWidget *parent,
         connect(m_params,
                 &ParameterStore::paramChanged,
                 this,
-                &ConfigurationWnd::onParamChanged);
+                &ApplicationConfWnd::onParamChanged);
     }
+
+    hide();
+
 }
 
-ConfigurationWnd::~ConfigurationWnd()
+ApplicationConfWnd::~ApplicationConfWnd()
 {
     delete ui;
 }
 
-void ConfigurationWnd::setParameters(ParameterStore *params)
+void ApplicationConfWnd::setParameters(ParameterStore *params)
 {
     if(m_params != nullptr)
     {
         disconnect(m_params,
                    &ParameterStore::paramChanged,
                    this,
-                   &ConfigurationWnd::onParamChanged);
+                   &ApplicationConfWnd::onParamChanged);
     }
 
     m_params = params;
@@ -72,18 +72,18 @@ void ConfigurationWnd::setParameters(ParameterStore *params)
         connect(m_params,
                 &ParameterStore::paramChanged,
                 this,
-                &ConfigurationWnd::onParamChanged);
+                &ApplicationConfWnd::onParamChanged);
     }
 
     rebuildUi();
 }
 
-void ConfigurationWnd::setParamValue(const QString &key, const QString &value)
+void ApplicationConfWnd::setParamValue(const QString &key, const QString &value)
 {
     setFieldValue(key, value, true);
 }
 
-void ConfigurationWnd::setFieldEditable(const QString &key, bool editable)
+void ApplicationConfWnd::setFieldEditable(const QString &key, bool editable)
 {
     if(fields.contains(key) == false)
     {
@@ -93,21 +93,7 @@ void ConfigurationWnd::setFieldEditable(const QString &key, bool editable)
     fields[key]->setReadOnly(!editable);
 }
 
-void ConfigurationWnd::setConfigurationAcquiredStatus(bool status)
-{
-    if(configurationStatusLabel == nullptr)
-    {
-        return;
-    }
-
-    configurationStatusLabel->setText(status ?
-                                      "Device status: Configuration acquired successfully" :
-                                      "Device status: Configuration acquire failed");
-
-    refreshStatusBar();
-}
-
-void ConfigurationWnd::setConfigurationAppliedStatus(bool status)
+void ApplicationConfWnd::setConfigurationAppliedStatus(bool status)
 {
     if(configurationStatusLabel == nullptr)
     {
@@ -116,7 +102,7 @@ void ConfigurationWnd::setConfigurationAppliedStatus(bool status)
 
     if(status == true)
     {
-        configurationStatusLabel->setText("Device status: Configuration applied successfully");
+        configurationStatusLabel->setText("Application status: Configuration applied successfully");
 
         for(auto it = fields.begin(); it != fields.end(); ++it)
         {
@@ -125,13 +111,13 @@ void ConfigurationWnd::setConfigurationAppliedStatus(bool status)
     }
     else
     {
-        configurationStatusLabel->setText("Device status: Configuration apply failed");
+        configurationStatusLabel->setText("Application status: Configuration apply failed");
     }
 
     refreshStatusBar();
 }
 
-void ConfigurationWnd::rebuildUi()
+void ApplicationConfWnd::rebuildUi()
 {
     clearUiState();
 
@@ -168,7 +154,7 @@ void ConfigurationWnd::rebuildUi()
     refreshStatusBar();
 }
 
-void ConfigurationWnd::clearUiState()
+void ApplicationConfWnd::clearUiState()
 {
     fields.clear();
     appliedValues.clear();
@@ -177,8 +163,7 @@ void ConfigurationWnd::clearUiState()
     tabWidget = nullptr;
     configurationStatusLabel = nullptr;
     changedFieldsLabel = nullptr;
-    setConfigButton = nullptr;
-    acquireConfigButton = nullptr;
+    applyConfigButton = nullptr;
 
     QLayout *oldLayout = layout();
 
@@ -205,7 +190,7 @@ void ConfigurationWnd::clearUiState()
     }
 }
 
-QWidget *ConfigurationWnd::createTab(Params::GroupId group)
+QWidget *ApplicationConfWnd::createTab(Params::GroupId group)
 {
     QWidget *tab = new QWidget(this);
     QVBoxLayout *tabMainLayout = new QVBoxLayout(tab);
@@ -223,7 +208,7 @@ QWidget *ConfigurationWnd::createTab(Params::GroupId group)
     return tab;
 }
 
-QVBoxLayout *ConfigurationWnd::createGroupLayout(Params::GroupId group)
+QVBoxLayout *ApplicationConfWnd::createGroupLayout(Params::GroupId group)
 {
     QVBoxLayout *groupLayout = new QVBoxLayout();
 
@@ -269,8 +254,8 @@ QVBoxLayout *ConfigurationWnd::createGroupLayout(Params::GroupId group)
     return groupLayout;
 }
 
-QGroupBox *ConfigurationWnd::createSubGroupBox(Params::GroupId group,
-                                               Params::SubGroupId subGroup)
+QGroupBox *ApplicationConfWnd::createSubGroupBox(Params::GroupId group,
+                                                 Params::SubGroupId subGroup)
 {
     if(m_params == nullptr)
     {
@@ -303,7 +288,7 @@ QGroupBox *ConfigurationWnd::createSubGroupBox(Params::GroupId group,
     return groupBox;
 }
 
-QGridLayout *ConfigurationWnd::createParamsGrid(const QList<Params::Param> &params)
+QGridLayout *ApplicationConfWnd::createParamsGrid(const QList<Params::Param> &params)
 {
     QGridLayout *gridLayout = new QGridLayout();
 
@@ -324,26 +309,26 @@ QGridLayout *ConfigurationWnd::createParamsGrid(const QList<Params::Param> &para
     return gridLayout;
 }
 
-QWidget *ConfigurationWnd::createParamWidget(const Params::Param &param)
+QWidget *ApplicationConfWnd::createParamWidget(const Params::Param &param)
 {
     QWidget *controlWidget = new QWidget(this);
     QVBoxLayout *controlLayout = new QVBoxLayout(controlWidget);
     controlLayout->setContentsMargins(0, 0, 0, 0);
 
     QLabel *nameLabel = new QLabel(param.meta.displayName, this);
-    nameLabel->setMinimumHeight(CONFIG_ROW_HEIGHT);
+    nameLabel->setMinimumHeight(APP_CONFIG_ROW_HEIGHT);
     nameLabel->setToolTip(param.meta.description);
 
     QHBoxLayout *fieldLayout = new QHBoxLayout();
 
     QLineEdit *field = new QLineEdit(this);
-    field->setFixedWidth(CONFIG_FIELD_WIDTH);
-    field->setMinimumHeight(CONFIG_ROW_HEIGHT);
+    field->setFixedWidth(APP_CONFIG_FIELD_WIDTH);
+    field->setMinimumHeight(APP_CONFIG_ROW_HEIGHT);
     field->setToolTip(param.meta.description);
 
     QLabel *unitLabel = new QLabel(param.meta.unit, this);
-    unitLabel->setFixedWidth(CONFIG_UNIT_WIDTH);
-    unitLabel->setMinimumHeight(CONFIG_ROW_HEIGHT);
+    unitLabel->setFixedWidth(APP_CONFIG_UNIT_WIDTH);
+    unitLabel->setMinimumHeight(APP_CONFIG_ROW_HEIGHT);
 
     fieldLayout->addWidget(field);
     fieldLayout->addWidget(unitLabel);
@@ -357,58 +342,49 @@ QWidget *ConfigurationWnd::createParamWidget(const Params::Param &param)
     return controlWidget;
 }
 
-QHBoxLayout *ConfigurationWnd::createButtonsRow()
+QHBoxLayout *ApplicationConfWnd::createButtonsRow()
 {
     QHBoxLayout *buttonsLayout = new QHBoxLayout();
 
-    configurationStatusLabel = new QLabel("Device status: Configuration not acquired", this);
-    configurationStatusLabel->setMinimumHeight(CONFIG_ROW_HEIGHT);
+    configurationStatusLabel = new QLabel("Application status: Configuration not changed", this);
+    configurationStatusLabel->setMinimumHeight(APP_CONFIG_ROW_HEIGHT);
 
-    setConfigButton = new QPushButton("Set config", this);
-    setConfigButton->setFixedSize(CONFIG_BUTTON_WIDTH, CONFIG_BUTTON_HEIGHT);
-
-    acquireConfigButton = new QPushButton("Acquire config", this);
-    acquireConfigButton->setFixedSize(CONFIG_BUTTON_WIDTH, CONFIG_BUTTON_HEIGHT);
+    applyConfigButton = new QPushButton("Apply config", this);
+    applyConfigButton->setFixedSize(APP_CONFIG_BUTTON_WIDTH, APP_CONFIG_BUTTON_HEIGHT);
 
     buttonsLayout->addWidget(configurationStatusLabel);
     buttonsLayout->addStretch();
-    buttonsLayout->addWidget(setConfigButton);
-    buttonsLayout->addWidget(acquireConfigButton);
+    buttonsLayout->addWidget(applyConfigButton);
 
-    connect(setConfigButton,
+    connect(applyConfigButton,
             &QPushButton::clicked,
             this,
-            &ConfigurationWnd::onSetConfigClicked);
-
-    connect(acquireConfigButton,
-            &QPushButton::clicked,
-            this,
-            &ConfigurationWnd::onAcquireConfigClicked);
+            &ApplicationConfWnd::onApplyConfigClicked);
 
     return buttonsLayout;
 }
 
-QVBoxLayout *ConfigurationWnd::createStatusBarLayout()
+QVBoxLayout *ApplicationConfWnd::createStatusBarLayout()
 {
     QVBoxLayout *statusLayout = new QVBoxLayout();
 
     changedFieldsLabel = new QLabel("Changed: None", this);
-    changedFieldsLabel->setMinimumHeight(CONFIG_ROW_HEIGHT);
+    changedFieldsLabel->setMinimumHeight(APP_CONFIG_ROW_HEIGHT);
 
     statusLayout->addWidget(changedFieldsLabel);
 
     return statusLayout;
 }
 
-void ConfigurationWnd::registerField(const Params::Param &param,
-                                     QLineEdit *field)
+void ApplicationConfWnd::registerField(const Params::Param &param,
+                                       QLineEdit *field)
 {
     const QString key = param.meta.key;
 
     fields[key] = field;
     displayNames[key] = param.meta.displayName;
 
-    if (param.initialized)
+    if(param.initialized == true)
     {
         field->setText(param.value.toString());
         appliedValues[key] = param.value.toString();
@@ -419,31 +395,45 @@ void ConfigurationWnd::registerField(const Params::Param &param,
     {
         field->setText("");
         field->setStyleSheet("QLineEdit { background-color: #e0e0e0; color: #707070; }");
-        field->setPlaceholderText("Not acquired");
+        field->setPlaceholderText("Not initialized");
         appliedValues[key] = QString();
         field->setReadOnly(true);
     }
 
+    if(param.meta.access != Params::Access::ReadWrite)
+    {
+        field->setReadOnly(true);
+        field->setStyleSheet("QLineEdit { background-color: #e0e0e0; color: #707070; }");
+    }
 
     connect(field,
             &QLineEdit::textChanged,
             this,
-            &ConfigurationWnd::onFieldChanged);
+            &ApplicationConfWnd::onFieldChanged);
 }
 
-void ConfigurationWnd::setFieldValue(const QString &key,
-                                     const QString &value,
-                                     bool markAsApplied)
+void ApplicationConfWnd::setFieldValue(const QString &key,
+                                       const QString &value,
+                                       bool markAsApplied)
 {
     if(fields.contains(key) == false)
+    {
         return;
+    }
+
+    if(m_params == nullptr || m_params->hasParam(key) == false)
+    {
+        return;
+    }
 
     QSignalBlocker blocker(fields[key]);
 
     fields[key]->setText(value);
     fields[key]->setPlaceholderText("");
     fields[key]->setStyleSheet("");
-    if(m_params->getParam(key).meta.access != Params::Access::ReadWrite){
+
+    if(m_params->getParam(key).meta.access != Params::Access::ReadWrite)
+    {
         fields[key]->setReadOnly(true);
         fields[key]->setStyleSheet("QLineEdit { background-color: #e0e0e0; color: #707070; }");
     }
@@ -453,12 +443,14 @@ void ConfigurationWnd::setFieldValue(const QString &key,
     }
 
     if(markAsApplied == true)
+    {
         appliedValues[key] = value;
+    }
 
     refreshStatusBar();
 }
 
-QMap<QString, QString> ConfigurationWnd::getChangedFields() const
+QMap<QString, QString> ApplicationConfWnd::getChangedFields() const
 {
     QMap<QString, QString> changedFields;
 
@@ -469,10 +461,14 @@ QMap<QString, QString> ConfigurationWnd::getChangedFields() const
         if(m_params != nullptr)
         {
             if(m_params->isEditable(key) == false)
+            {
                 continue;
+            }
 
             if(m_params->isInitialized(key) == false && it.value()->text().isEmpty())
+            {
                 continue;
+            }
         }
 
         const QString currentValue = it.value()->text();
@@ -487,36 +483,7 @@ QMap<QString, QString> ConfigurationWnd::getChangedFields() const
     return changedFields;
 }
 
-QMap<QString, QString> ConfigurationWnd::getChangedFields(Params::GroupId group) const
-{
-    QMap<QString, QString> changedFields;
-
-    if(m_params == nullptr)
-    {
-        return changedFields;
-    }
-
-    QMap<QString, QString> allChangedFields = getChangedFields();
-
-    for(auto it = allChangedFields.constBegin(); it != allChangedFields.constEnd(); ++it)
-    {
-        if(m_params->hasParam(it.key()) == false)
-        {
-            continue;
-        }
-
-        Params::ParamMeta meta = m_params->getParamMeta(it.key());
-
-        if(meta.group == group)
-        {
-            changedFields[it.key()] = it.value();
-        }
-    }
-
-    return changedFields;
-}
-
-QStringList ConfigurationWnd::getChangedFieldDisplayNames() const
+QStringList ApplicationConfWnd::getChangedFieldDisplayNames() const
 {
     QStringList changedNames;
 
@@ -530,7 +497,7 @@ QStringList ConfigurationWnd::getChangedFieldDisplayNames() const
     return changedNames;
 }
 
-void ConfigurationWnd::refreshStatusBar()
+void ApplicationConfWnd::refreshStatusBar()
 {
     if(changedFieldsLabel == nullptr)
     {
@@ -549,44 +516,22 @@ void ConfigurationWnd::refreshStatusBar()
 
         if(configurationStatusLabel != nullptr)
         {
-            configurationStatusLabel->setText("Device status: Configuration changed, not applied");
+            configurationStatusLabel->setText("Application status: Configuration changed, not applied");
         }
     }
 }
 
-bool ConfigurationWnd::isDeviceParam(const QString &key) const
-{
-    if(m_params == nullptr || m_params->hasParam(key) == false)
-    {
-        return false;
-    }
-
-    return m_params->getParamMeta(key).group ==
-           static_cast<Params::GroupId>(DeviceParamDefs::Group::DeviceConfig);
-}
-
-bool ConfigurationWnd::isApplicationParam(const QString &key) const
-{
-    if(m_params == nullptr || m_params->hasParam(key) == false)
-    {
-        return false;
-    }
-
-    return m_params->getParamMeta(key).group ==
-           static_cast<Params::GroupId>(DeviceParamDefs::Group::ApplicationConfig);
-}
-
-void ConfigurationWnd::onFieldChanged()
+void ApplicationConfWnd::onFieldChanged()
 {
     refreshStatusBar();
 }
 
-void ConfigurationWnd::onParamChanged(QString key, QString value)
+void ApplicationConfWnd::onParamChanged(QString key, QString value)
 {
     setFieldValue(key, value, true);
 }
 
-void ConfigurationWnd::onSetConfigClicked()
+void ApplicationConfWnd::onApplyConfigClicked()
 {
     QMap<QString, QString> changedFields = getChangedFields();
 
@@ -594,42 +539,17 @@ void ConfigurationWnd::onSetConfigClicked()
     {
         if(configurationStatusLabel != nullptr)
         {
-            configurationStatusLabel->setText("Device status: No configuration changes detected");
+            configurationStatusLabel->setText("Application status: No configuration changes detected");
         }
 
         return;
     }
 
-    QMap<QString, QString> changedDeviceFields =
-        getChangedFields(static_cast<Params::GroupId>(DeviceParamDefs::Group::DeviceConfig));
-
-    QMap<QString, QString> changedApplicationFields =
-        getChangedFields(static_cast<Params::GroupId>(DeviceParamDefs::Group::ApplicationConfig));
-
     if(configurationStatusLabel != nullptr)
     {
-        configurationStatusLabel->setText("Device status: Configuration apply requested");
+        configurationStatusLabel->setText("Application status: Configuration apply requested");
     }
 
-    if(changedDeviceFields.isEmpty() == false)
-    {
-        emit sigDeviceConfigSet(changedDeviceFields);
-    }
-
-    if(changedApplicationFields.isEmpty() == false)
-    {
-        emit sigApplicationConfigSet(changedApplicationFields);
-    }
-
+    emit sigApplicationConfigSet(changedFields);
     emit sigConfigSet(changedFields);
-}
-
-void ConfigurationWnd::onAcquireConfigClicked()
-{
-    if(configurationStatusLabel != nullptr)
-    {
-        configurationStatusLabel->setText("Device status: Configuration acquire requested");
-    }
-
-    emit sigDeviceConfigAcquireRequest();
 }

@@ -10,12 +10,13 @@
 #include "Utility/log.h"
 #include "Processing/fileprocessing.h"
 #include "Processing/charginganalysis.h"
+#include "Processing/Parameters/applicationparameters.h"
 
 class DeviceContainer : public QObject
 {
     Q_OBJECT
 public:
-    explicit DeviceContainer(QObject *parent = nullptr,  DeviceWnd* aDeviceWnd = nullptr, Device* aDevice = nullptr, QString aWsPath="");
+    explicit DeviceContainer(QObject *parent = nullptr,  DeviceWnd* aDeviceWnd = nullptr, Device* aDevice = nullptr, ApplicationParameters* appParam=nullptr);
     ~DeviceContainer();
 
 signals:
@@ -69,6 +70,12 @@ public slots:
     void    onDeviceUVoltageObtained(bool state);
     void    onDeviceOVoltageObtained(bool state);
     void    onDeviceOCurrentObtained(bool state);
+    void    onDeviceUVoltageValueObtained(float value);
+    void    onDeviceOVoltageValueObtained(float value);
+    void    onDeviceOCurrentValueObtained(int value);
+
+    void    onDeviceConfigUpdated(QMap<QString, QString> changedFields);
+
     void    onDeviceChargingDone();
     void    onDeviceLoadCurrentObtained(int current);
     void    onDeviceChargerCurrentObtained(int current);
@@ -103,7 +110,7 @@ private:
     Log*                            log;
     FileProcessing*                 fileProcessing;
 
-
+    void                            fillDeviceSetFunctions();
     device_adc_resolution_t         getAdcResolutionFromString(QString resolution);
     device_adc_clock_div_t          getAdcClockDivFromString(QString clkDiv);
     device_adc_ch_sampling_time_t   getAdcChSamplingTimeFromString(QString chstime);
@@ -114,7 +121,6 @@ private:
     double                          elapsedTime;
     QTimer                          *timer;
 
-    QString                         wsPath;
 
     QString                         consumptionProfileName;
     bool                            consumptionProfileNameSet;
@@ -125,6 +131,11 @@ private:
     bool                            epEnabled; //
 
     ChargingState                   chargingState;
+
+    ApplicationParameters           *m_AppParamsRef;
+
+
+    QMap<QString, std::function<void(const QString&)>> deviceSetHandlers;
 
 };
 

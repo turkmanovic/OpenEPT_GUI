@@ -1,5 +1,5 @@
-#ifndef CONFIGURATIONWND_H
-#define CONFIGURATIONWND_H
+#ifndef APPLICATIONCONFWND_H
+#define APPLICATIONCONFWND_H
 
 #include <QWidget>
 #include <QMap>
@@ -7,7 +7,6 @@
 #include <QStringList>
 
 #include "Processing/Parameters/parameterstore.h"
-#include "Processing/Parameters/deviceparamdefs.h"
 
 class QLineEdit;
 class QLabel;
@@ -17,44 +16,38 @@ class QHBoxLayout;
 class QGridLayout;
 class QGroupBox;
 class QTabWidget;
-class QLayout;
 
 namespace Ui {
-class ConfigurationWnd;
+class ApplicationConfWnd;
 }
 
-class ConfigurationWnd : public QWidget
+class ApplicationConfWnd : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit ConfigurationWnd(QWidget *parent = nullptr,
-                              ParameterStore *params = nullptr);
-    ~ConfigurationWnd();
+    explicit ApplicationConfWnd(QWidget *parent = nullptr,
+                                ParameterStore *params = nullptr);
+    ~ApplicationConfWnd();
 
     void setParameters(ParameterStore *params);
 
     void setParamValue(const QString &key, const QString &value);
     void setFieldEditable(const QString &key, bool editable);
 
-    void setConfigurationAcquiredStatus(bool status);
     void setConfigurationAppliedStatus(bool status);
 
 signals:
-    void sigDeviceConfigSet(QMap<QString, QString> changedFields);
     void sigApplicationConfigSet(QMap<QString, QString> changedFields);
     void sigConfigSet(QMap<QString, QString> changedFields);
-
-    void sigDeviceConfigAcquireRequest();
 
 private slots:
     void onFieldChanged();
     void onParamChanged(QString key, QString value);
-    void onSetConfigClicked();
-    void onAcquireConfigClicked();
+    void onApplyConfigClicked();
 
 private:
-    Ui::ConfigurationWnd *ui;
+    Ui::ApplicationConfWnd *ui;
 
     ParameterStore *m_params;
 
@@ -63,8 +56,7 @@ private:
     QLabel *configurationStatusLabel;
     QLabel *changedFieldsLabel;
 
-    QPushButton *setConfigButton;
-    QPushButton *acquireConfigButton;
+    QPushButton *applyConfigButton;
 
     QMap<QString, QLineEdit*> fields;
     QMap<QString, QString> appliedValues;
@@ -92,14 +84,9 @@ private:
                        bool markAsApplied);
 
     QMap<QString, QString> getChangedFields() const;
-    QMap<QString, QString> getChangedFields(Params::GroupId group) const;
-
     QStringList getChangedFieldDisplayNames() const;
 
     void refreshStatusBar();
-
-    bool isDeviceParam(const QString &key) const;
-    bool isApplicationParam(const QString &key) const;
 };
 
-#endif // CONFIGURATIONWND_H
+#endif // APPLICATIONCONFWND_H

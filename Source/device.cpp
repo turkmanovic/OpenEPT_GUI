@@ -3,7 +3,7 @@
 #include "device.h"
 #include <QtMath>
 
-Device::Device(QObject *parent)
+Device::Device(QObject *parent, ApplicationParameters* params, unsigned int deviceID)
     : QObject{parent}
 {
     adcResolution           = DEVICE_ADC_RESOLUTION_UKNOWN;
@@ -20,7 +20,9 @@ Device::Device(QObject *parent)
     energyPointProcessing   = new EPProcessing();
     chargingAnalysis        = new ChargingAnalysis();
     epEnabled               = false;
+    deviceIDDynamic         =deviceID;
     m_params                = new DeviceParameters();
+    m_AppParams             = params;
 
 }
 
@@ -98,9 +100,10 @@ void Device::controlLinkAssign(ControlLink* link)
 
 }
 
-bool Device::createStreamLink(QString ip, quint16 port, int* id)
+bool Device::createStreamLink(QString ip, int* id)
 {
     QString response;
+    quint16 port = m_AppParams->getParamValue("streamServiceBasePort").toUShort() + deviceIDDynamic;
     QString command = "device stream create -ip=" + ip +  " -port=" + QString::number(port);
     if(controlLink == NULL) return false;
 
@@ -147,7 +150,7 @@ bool Device::establishStatusLink(QString ip)
     QString command = "device slink create -ip=" + ip +  " -port=" + port;
 
     if(controlLink == NULL) return false;
-    if(!controlLink->executeCommand(command, &response, 1000))
+    if(!controlLink->executeCommand(command, &response, 5000))
     {
         m_params->setParamInitialized("statusLinkPort",false);
         return false;
@@ -178,6 +181,7 @@ bool  Device::establishEPLink(QString ip)
 void Device::epLinkServerCreate()
 {
     energyPointLink  = new EDLink();
+    energyPointLink->setPort(m_AppParams->getParamValue("epServiceBasePort").toUShort() + deviceIDDynamic);
     energyPointLink->startServer();
     m_params->setParamValue("energyPointLinkPort", QString::number(energyPointLink->getPort()));
     connect(energyPointLink, SIGNAL(sigNewEPNameReceived(uint,uint,QString)), energyPointProcessing, SLOT(onNewEPNameReceived(uint,uint,QString)), Qt::QueuedConnection);
@@ -188,9 +192,9 @@ void Device::epLinkServerCreate()
 void Device::statusLinkServerCreate()
 {
      statusLink = new StatusLink();
+     statusLink->setPort(m_AppParams->getParamValue("statusServiceBasePort").toUShort() + deviceIDDynamic);
      statusLink->startServer();
-     statusLink->setPort(8818);
-     m_params->setParamValue("statusLinkPort", QString::number(8818));
+     m_params->setParamValue("statusLinkPort", QString::number(statusLink->getPort()));
      connect(statusLink, SIGNAL(sigNewClientConnected(QString)), this, SLOT(onStatusLinkNewDeviceAdded(QString)));
      connect(statusLink, SIGNAL(sigNewStatusMessageReceived(QString,QString)), this, SLOT(onStatusLinkNewMessageReceived(QString,QString)));
 
@@ -773,6 +777,91 @@ bool Device::getCOffset(QString *off)
     return true;
 }
 
+bool Device::setUVoltageValue(float value)
+{
+    QString response;
+    QString command = "device uvoltage value set -value=" + QString::number(value, 'g', 4);
+
+    if(controlLink == NULL) return false;
+    if(!controlLink->executeCommand(command, &response, 1000)) return false;
+
+    if(response != "OK") return false;
+
+    return true;
+}
+
+bool Device::getUVoltageValue(float *value)
+{
+    QString response;
+    QString command = "device uvoltage value get";
+
+    if(!controlLink->executeCommand(command, &response, 1000)) return false;
+
+    float tmp = response.toFloat();
+
+    if(value != nullptr) *value = tmp;
+
+    emit sigUVoltageValueObtained(tmp);
+
+    return true;
+}
+bool Device::setOVoltageValue(float value)
+{
+    QString response;
+    QString command = "device ovoltage value set -value=" + QString::number(value, 'g', 4);
+
+    if(controlLink == NULL) return false;
+    if(!controlLink->executeCommand(command, &response, 1000)) return false;
+
+    if(response != "OK") return false;
+
+    return true;
+}
+
+bool Device::getOVoltageValue(float *value)
+{
+    QString response;
+    QString command = "device ovoltage value get";
+
+    if(!controlLink->executeCommand(command, &response, 1000)) return false;
+
+    float tmp = response.toFloat();
+
+    if(value != nullptr) *value = tmp;
+
+    emit sigOVoltageValueObtained(tmp);
+
+    return true;
+}
+bool Device::setOCurrentValue(int value)
+{
+    QString response;
+    QString command = "device ocurrent value set -value=" + QString::number(value);
+
+    if(controlLink == NULL) return false;
+    if(!controlLink->executeCommand(command, &response, 1000)) return false;
+
+    if(response != "OK") return false;
+
+    return true;
+}
+
+bool Device::getOCurrentValue(int *value)
+{
+    QString response;
+    QString command = "device ocurrent value get";
+
+    if(!controlLink->executeCommand(command, &response, 1000)) return false;
+
+    int tmp = response.toInt();
+
+    if(value != nullptr) *value = tmp;
+
+    emit sigOCurrentValueObtained(tmp);
+
+    return true;
+}
+
 bool Device::getADCInputClk(QString *clk)
 {
     QString response;
@@ -813,8 +902,11 @@ bool Device::acquireDeviceConfiguration(device_adc_t aAdc)
     getBatStatus();
     getPPathStatus();
     getUVoltageStatus();
+    getUVoltageValue();
     getOVoltageStatus();
+    getOVoltageValue();
     getOCurrentStatus();
+    getOCurrentValue();
     getChargerCurrent();
     getChargerTermCurrent();
     getChargerTermVoltage();
@@ -1162,7 +1254,7 @@ bool Device::latchTrigger()
 bool Device::getUVoltageStatus(bool *status)
 {
     QString response;
-    QString command = "device uvoltage get";
+    QString command = "device uvoltage state get";
     if(!controlLink->executeCommand(command, &response, 1000)) return false;
     //Parse response
     uvoltage = response.toDouble();
@@ -1174,7 +1266,7 @@ bool Device::getUVoltageStatus(bool *status)
 bool Device::getOVoltageStatus(bool *status)
 {
     QString response;
-    QString command = "device ovoltage get";
+    QString command = "device ovoltage state get";
     if(!controlLink->executeCommand(command, &response, 1000)) return false;
     //Parse response
     ovoltage = response.toDouble();
@@ -1186,7 +1278,7 @@ bool Device::getOVoltageStatus(bool *status)
 bool Device::getOCurrentStatus(bool *status)
 {
     QString response;
-    QString command = "device ocurrent get";
+    QString command = "device ocurrent state get";
     if(!controlLink->executeCommand(command, &response, 1000)) return false;
     //Parse response
     ocurrent = response.toDouble();

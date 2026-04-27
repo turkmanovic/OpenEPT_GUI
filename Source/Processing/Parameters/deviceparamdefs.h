@@ -1,107 +1,37 @@
 #ifndef DEVICEPARAMDEFS_H
 #define DEVICEPARAMDEFS_H
 
-#include <QList>
-#include <QString>
-#include <QStringList>
-#include <QVariant>
+#include "parameterdefs.h"
 
-namespace DeviceParams
+namespace DeviceParamDefs
 {
-    enum class Group
+    enum Group
     {
-        DeviceConfig,
-        ApplicationConfig,
-        RuntimeState,
-        Calculated
+        DeviceConfig = 0,
+        ApplicationConfig = 1,
+        RuntimeState = 2,
+        Calculated = 3
     };
 
-    enum class SubGroup
+    enum SubGroup
     {
-        General,
-        Network,
-        Stream,
-        ADC,
-        EnergyPoint,
-        Processing,
-        Load,
-        Charger,
-        Battery,
-        Protection,
-        Statistics,
-        FileStorage
+        General = 0,
+        Network = 1,
+        Stream = 2,
+        ADC = 3,
+        EnergyPoint = 4,
+        Processing = 5,
+        Load = 6,
+        Charger = 6,
+        Battery = 7,
+        Protection = 8,
+        Statistics = 10,
+        FileStorage = 11
     };
 
-    enum class Access
-    {
-        ReadWrite,
-        ReadOnly,
-        RuntimeOnly
-    };
-
-    enum class Storage
-    {
-        None,
-        SaveOnly,
-        LoadSave
-    };
-
-    enum class Target
-    {
-        Device,
-        Application,
-        Runtime,
-        Calculated
-    };
-
-    struct GroupMeta
-    {
-        Group id;
-        QString name;
-        QString description;
-        int order;
-    };
-
-    struct SubGroupMeta
-    {
-        SubGroup id;
-        QString name;
-        QString description;
-        int order;
-    };
-
-    struct ParamMeta
-    {
-        QString key;
-        QString displayName;
-        QString description;
-        QString unit;
-
-        Group group;
-        SubGroup subGroup;
-        Access access;
-        Storage storage;
-        Target target;
-
-        QVariant defaultValue;
-        QVariant minValue;
-        QVariant maxValue;
-        QStringList allowedValues;
-
-        bool visible;
-        int order;
-    };
-
-    struct Param
-    {
-        ParamMeta meta;
-        QVariant value;
-        bool initialized;
-    };
-
-    QList<GroupMeta> defaultGroupMeta();
-    QList<SubGroupMeta> defaultSubGroupMeta();
-    QList<Param> defaultParams();
+    QList<Params::GroupMeta> defaultGroupMeta();
+    QList<Params::SubGroupMeta> defaultSubGroupMeta();
+    QList<Params::Param> defaultParams();
 }
 
 #endif // DEVICEPARAMDEFS_H

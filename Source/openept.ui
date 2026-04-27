@@ -25,60 +25,9 @@
     </sizepolicy>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">
-    <item>
-     <widget class="QMdiArea" name="mdiArea">
-      <property name="enabled">
-       <bool>true</bool>
-      </property>
-      <property name="font">
-       <font>
-        <family>Arial</family>
-        <pointsize>11</pointsize>
-        <weight>75</weight>
-        <bold>true</bold>
-       </font>
-      </property>
-      <property name="autoFillBackground">
-       <bool>false</bool>
-      </property>
-      <property name="styleSheet">
-       <string notr="true"/>
-      </property>
-      <property name="frameShadow">
-       <enum>QFrame::Raised</enum>
-      </property>
-      <property name="verticalScrollBarPolicy">
-       <enum>Qt::ScrollBarAsNeeded</enum>
-      </property>
-      <property name="horizontalScrollBarPolicy">
-       <enum>Qt::ScrollBarAsNeeded</enum>
-      </property>
-      <property name="sizeAdjustPolicy">
-       <enum>QAbstractScrollArea::AdjustToContents</enum>
-      </property>
-      <property name="background">
-       <brush brushstyle="SolidPattern">
-        <color alpha="255">
-         <red>104</red>
-         <green>104</green>
-         <blue>104</blue>
-        </color>
-       </brush>
-      </property>
-      <property name="viewMode">
-       <enum>QMdiArea::SubWindowView</enum>
-      </property>
-      <property name="documentMode">
-       <bool>true</bool>
-      </property>
-      <property name="tabsClosable">
-       <bool>true</bool>
-      </property>
-      <property name="tabsMovable">
-       <bool>true</bool>
-      </property>
-     </widget>
-    </item>
+    <property name="sizeConstraint">
+     <enum>QLayout::SetMaximumSize</enum>
+    </property>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -138,6 +87,7 @@
    <addaction name="actionAddMultipleDevices"/>
    <addaction name="actionDataAnalyzer"/>
    <addaction name="separator"/>
+   <addaction name="actionApplicationSettings"/>
   </widget>
   <action name="actionAddMultipleDevices">
    <property name="icon">

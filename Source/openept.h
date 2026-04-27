@@ -8,6 +8,8 @@
 #include "Windows/DataAnalyzer/dataanalyzer.h"
 #include "devicecontainer.h"
 #include "Windows/Device/energycontrolwnd.h"
+#include "Windows/ApplicationConf/applicationconfwnd.h"
+#include "Processing/Parameters/applicationparameters.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class OpenEPT; }
@@ -29,6 +31,8 @@ private slots:
     void onDeviceContainerAllDeviceWndClosed();
     void onActionOpenAndProcessData();
     void onActionAppSettings();
+
+    void onAppConfigUpdated(QMap<QString, QString> changedFields);
 
 
 private:
@@ -57,6 +61,22 @@ private:
 
     /**/
 //    EnergyControlWnd            ecw;
+
+    /**/
+    ApplicationParameters*     m_AppParam;
+
+    ApplicationConfWnd*        appConfWnd;
+
+    /**/
+    QString applicationConfigDirPath;
+    QString applicationConfigFilePath;
+
+    QString                     createApplicationConfigDir();
+    bool                        loadApplicationConfigJson(QJsonObject *jsonObject);
+    bool                        saveApplicationConfigJson(const QJsonObject &jsonObject);
+    void                        initializeApplicationParameters();
+
+    unsigned int                connectedDeviceNumber;
 
 };
 #endif // OPENEPT_H

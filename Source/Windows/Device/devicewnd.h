@@ -105,6 +105,10 @@ public:
     bool            setOVoltageIndication(bool state);
     bool            setOCurrentIndication(bool state);
 
+    bool            setUVoltageValue(float value);
+    bool            setOVoltageValue(float value);
+    bool            setOCurrentValue(int value);
+
 
     bool            setChargerCurrent(int current);
     bool            setChargerTermCurrent(int current);
@@ -116,6 +120,8 @@ public:
     void            setStatisticsData(double dropRate, unsigned int dropPacketsNo, unsigned int fullReceivedBuffersNo, unsigned int lastBufferID);
     void            setStatisticsSamplingTime(double stime);
     void            setStatisticsElapsedTime(int elapsedTime);
+
+    void            setConfigurationAppliedStatus(bool status);
 
     bool            plotVoltageValues(QVector<double> values, QVector<double> keys);
     bool            plotCurrentValues(QVector<double> values, QVector<double> keys);
@@ -175,10 +181,12 @@ signals:
     void            sigResetProtection();
 
     void            sigCalibrationUpdated();
+    void            sigDeviceConfigSet(QMap<QString, QString> changedFields);
 protected:
     void            closeEvent(QCloseEvent *event);
 
 public slots:
+    void            onDeviceConfigSet(QMap<QString, QString> changedFields);
     void            onSaveToFileChanged(int value);
     void            onStartAcquisition();
     void            onPauseAcquisition();
@@ -263,8 +271,6 @@ private:
 
     /**/
 
-    QButtonGroup*               consumptionTypeSelection;
-    QButtonGroup*               measurementTypeSelection;
     QString                     wsPath;
 
     DeviceParameters           *m_param;

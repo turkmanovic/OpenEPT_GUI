@@ -12,6 +12,7 @@
 #include "Processing/calibrationdata.h"
 #include "Processing/charginganalysis.h"
 #include "Processing/Parameters/deviceparameters.h"
+#include "Processing/Parameters/applicationparameters.h"
 
 /* Resolution sample time offset based on STM32H755ZI offset */
 #define     DEVICE_ADC_RESOLUTION_16BIT_STIME_OFFSET    8.5
@@ -83,7 +84,7 @@ class Device : public QObject
 {
     Q_OBJECT
 public:
-    explicit Device(QObject *parent = nullptr);
+    explicit Device(QObject *parent = nullptr, ApplicationParameters* params=nullptr, unsigned int deviceID=0);
     ~Device();
 
     DeviceParameters *parameters() const;
@@ -93,9 +94,9 @@ public:
     bool        setName(QString aNewDeviceName);
     bool        getName(QString* aDeviceName);
     void        controlLinkAssign(ControlLink* link);
-    bool        createStreamLink(QString ip, quint16 port, int* id);
     bool        establishStatusLink(QString ip);
     void        controlLinkReconnect();
+    bool        createStreamLink(QString ip, int* id);
     void        epLinkServerCreate();
     void        statusLinkServerCreate();
     bool        establishEPLink(QString ip);
@@ -117,6 +118,17 @@ public:
     bool        getVOffset(QString* off=NULL);
     bool        setCOffset(QString off);
     bool        getCOffset(QString* off=NULL);
+
+    bool        setUVoltageValue(float value);
+    bool        getUVoltageValue(float* value = nullptr);
+
+    bool        setOVoltageValue(float value);
+    bool        getOVoltageValue(float* value = nullptr);
+
+    bool        setOCurrentValue(int value);
+    bool        getOCurrentValue(int* value = nullptr);
+
+
     bool        getADCInputClk(QString* clk = NULL);
     double      obtainSamplingTime();    //This function determine time interval from start of until the acquisition end. Dont mix it with acquisiton (sampling) period
     bool        acquireDeviceConfiguration(device_adc_t aAdc = DEVICE_ADC_INTERNAL);
@@ -151,6 +163,7 @@ public:
     bool        getOVoltageStatus(bool* status = NULL);
     bool        getOCurrentStatus(bool* status = NULL);
 
+
 signals:
     void        sigControlLinkConnected();
     void        sigControlLinkDisconnected();
@@ -173,6 +186,9 @@ signals:
     void        sigUVoltageObtained(bool  state);
     void        sigOVoltageObtained(bool  state);
     void        sigOCurrentObtained(bool  state);
+    void        sigUVoltageValueObtained(float value);
+    void        sigOVoltageValueObtained(float value);
+    void        sigOCurrentValueObtained(int value);
     void        sigSamplesNoObained(unsigned int samplesNo);
     void        sigChargingDone();
 
@@ -212,6 +228,7 @@ private slots:
     void        onChargingStatusChanged(charginganalysis_status_t status);
 private:
     //QString                         deviceName;
+    int                             deviceIDDynamic;
     double                          samplingPeriod;                //ms
     device_adc_resolution_t         adcResolution;
     device_adc_ch_sampling_time_t   adcChSamplingTime;
@@ -265,6 +282,7 @@ private:
 
     /**/
     DeviceParameters                *m_params;
+    ApplicationParameters           *m_AppParams;
 
 };
 

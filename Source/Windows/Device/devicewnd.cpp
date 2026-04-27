@@ -109,7 +109,6 @@ DeviceWnd::DeviceWnd(QWidget *parent) :
     ui->GraphicsTopHorl->addWidget(voltageChart);
     ui->GraphicsTopHorl->addWidget(currentChart);
     ui->GraphicsBottomVerl->addWidget(consumptionChart, Qt::AlignCenter);
-    setDeviceInterfaceSelectionState(DEVICE_INTERFACE_SELECTION_STATE_UNDEFINED);
 
     connect(ui->saveToFileCheb, SIGNAL(stateChanged(int)), this, SLOT(onSaveToFileChanged(int)));
     connect(ui->EPControlEnableCheb, SIGNAL(stateChanged(int)), this, SLOT(onEPEnableChanged(int)));
@@ -124,9 +123,7 @@ DeviceWnd::DeviceWnd(QWidget *parent) :
     connect(ui->samplingPeriodLine,     SIGNAL(returnPressed()),                    this, SLOT(onSamplingPeriodChanged()));
     connect(ui->streamServerInterfComb, SIGNAL(currentTextChanged(QString)),        this, SLOT(onInterfaceChanged(QString)));
     connect(ui->maxNumOfPacketsLine,    SIGNAL(editingFinished()),                  this, SLOT(onMaxNumberOfBuffersChanged()));
-    connect(consumptionTypeSelection,   SIGNAL(buttonClicked(QAbstractButton*)),    this, SLOT(onConsumptionTypeChanged(QAbstractButton*)));
-    connect(measurementTypeSelection,   SIGNAL(buttonClicked(QAbstractButton*)),    this, SLOT(onMeasurementTypeChanged(QAbstractButton*)));    
-    connect(ui->samplesNoLine,          SIGNAL(returnPressed()),                    this, SLOT(onSamplesNoChanged()));
+     connect(ui->samplesNoLine,          SIGNAL(returnPressed()),                    this, SLOT(onSamplesNoChanged()));
 
 
 
@@ -136,6 +133,9 @@ DeviceWnd::DeviceWnd(QWidget *parent) :
 
     connect(ui->dischargeControlPusb1, SIGNAL(clicked(bool)), this, SLOT(onCalibrationButtonPressed(bool)));
     connect(ui->dischargeControlPusb2, SIGNAL(clicked(bool)), this, SLOT(onEnenergyControlButtonPressed(bool)));
+
+
+    setDeviceInterfaceSelectionState(DEVICE_INTERFACE_SELECTION_STATE_UNDEFINED);
 }
 
 void    DeviceWnd::onNewControlMsgRcvd(QString text)
@@ -292,21 +292,33 @@ void DeviceWnd::onEnenergyControlButtonPressed(bool pressed)
     energyControlWnd->show();
 }
 
-void    DeviceWnd::onSaveToFileChanged(int value)
+void DeviceWnd::onSaveToFileChanged(int value)
 {
     if(value == Qt::Checked)
     {
+        const QString defaultName =
+            QDateTime::currentDateTime().toString("yyyy_MM_dd_HH_mm");
+
         ui->consNamePusb->setEnabled(true);
         ui->consNameLab->setEnabled(true);
         ui->consNameLine->setEnabled(true);
         ui->consNameLine->setPlaceholderText("Set Consumption Name");
+
+        if(ui->consNameLine->text().isEmpty())
+        {
+            ui->consNameLine->setText(defaultName);
+        }
+
         emit sigSaveToFileEnabled(true);
-    }else
+    }
+    else
     {
         ui->consNamePusb->setEnabled(false);
         ui->consNameLab->setEnabled(false);
         ui->consNameLine->setEnabled(false);
+        ui->consNameLine->clear();
         ui->consNameLine->setPlaceholderText("Enable \"Save to file\"");
+
         emit sigSaveToFileEnabled(false);
     }
 }
@@ -377,6 +389,11 @@ void    DeviceWnd::closeEvent(QCloseEvent *event)
     emit sigWndClosed();
 }
 
+void DeviceWnd::onDeviceConfigSet(QMap<QString, QString> changedFields)
+{
+    emit sigDeviceConfigSet(changedFields);
+}
+
 DeviceWnd::~DeviceWnd()
 {
     delete ui;
@@ -393,6 +410,11 @@ void DeviceWnd::setParameters(DeviceParameters *params)
     m_param = params;
     ui->maxNumOfPacketsLine->setText(params->getParamValue("maxNumberOfBuffers"));
     ui->samplesNoLine->setText(params->getParamValue("streamPacketSize"));
+
+    connect(configurationWnd,
+            &ConfigurationWnd::sigDeviceConfigSet,
+            this,
+            &DeviceWnd::onDeviceConfigSet);
 }
 
 void DeviceWnd::setDeviceNetworkState(device_state_t aDeviceState)
@@ -584,6 +606,25 @@ bool DeviceWnd::setOCurrentIndication(bool state)
     return true;
 }
 
+bool DeviceWnd::setUVoltageValue(float value)
+{
+
+    configurationWnd->setParamValue("underVoltageValue", QString::number(value));
+    return true;
+}
+
+bool DeviceWnd::setOVoltageValue(float value)
+{
+    configurationWnd->setParamValue("overVoltageValue", QString::number(value));
+    return true;
+}
+
+bool DeviceWnd::setOCurrentValue(int value)
+{
+    configurationWnd->setParamValue("overCurrentValue", QString::number(value));
+    return true;
+}
+
 bool DeviceWnd::setChargerCurrent(int current)
 {
     energyControlWnd->chargerCurrentSet(current);
@@ -651,7 +692,12 @@ void DeviceWnd::setStatisticsElapsedTime(int elapsedTime)
     ui->statisticsAcquisitionDurationValueLabe->setText(QString("%1:%2:%3")
                                                             .arg(hours, 2, 10, QChar('0'))
                                                             .arg(minutes, 2, 10, QChar('0'))
-                                                            .arg(seconds, 2, 10, QChar('0')));
+                                                        .arg(seconds, 2, 10, QChar('0')));
+}
+
+void DeviceWnd::setConfigurationAppliedStatus(bool status)
+{
+    configurationWnd->setConfigurationAppliedStatus(status);
 }
 
 

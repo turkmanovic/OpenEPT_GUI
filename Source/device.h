@@ -170,6 +170,8 @@ public:
 
 
 signals:
+    void        sigBDChunkRead(float percentage);
+    void        sigBDChunkWrite(float percentage);
     void        sigControlLinkConnected();
     void        sigControlLinkDisconnected();
     void        sigStatusLinkNewDeviceAdded(QString aDeviceIP);

@@ -902,6 +902,8 @@ bool Device::getBDFContentFull(QString *content)
     const int chunkSize = 512;
     QString fullContent = "";
 
+    int i = 1;
+
     for(int offset = 0; offset < bdSize; offset += chunkSize)
     {
         int currentSize = chunkSize;
@@ -926,6 +928,9 @@ bool Device::getBDFContentFull(QString *content)
         /* response je HEX payload */
         fullContent += response;
 
+        emit sigBDChunkRead((float)i*((float)currentSize/(float)bdSize)*100);
+        i++;
+
     }
 
     *content = fullContent;
@@ -944,6 +949,7 @@ bool Device::setBDFContent(QByteArray *content)
         return false;
 
     const int chunkBytes = 128;
+    int i = 1;
 
     for(int offset = 0; offset < totalBytes; offset += chunkBytes)
     {
@@ -975,6 +981,9 @@ bool Device::setBDFContent(QByteArray *content)
         {
             return false;
         }
+
+        emit sigBDChunkWrite((float)i*((float)currentBytes/(float)totalBytes)*100);
+        i++;
     }
 
     return true;

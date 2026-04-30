@@ -82,6 +82,9 @@ public slots:
 
     void    onDeviceConfigUpdated(QMap<QString, QString> changedFields);
 
+    void    onDeviceBDChunkRead(float percentage);
+    void    onDeviceBDChunkWrite(float percentage);
+
     void    onDeviceChargingDone();
     void    onDeviceLoadCurrentObtained(int current);
     void    onDeviceChargerCurrentObtained(int current);

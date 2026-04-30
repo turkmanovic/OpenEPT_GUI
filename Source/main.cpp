@@ -10,6 +10,14 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
+    a.setStyleSheet(R"(
+    QToolTip {
+        background-color: #ffffff;
+        color: #000000;
+        border: 1px solid #ccc;
+    }
+    )");
+
     QCoreApplication::setOrganizationName("OpenEPT");
     QCoreApplication::setOrganizationDomain("openept.net");
     QCoreApplication::setApplicationName("OpenEPT");

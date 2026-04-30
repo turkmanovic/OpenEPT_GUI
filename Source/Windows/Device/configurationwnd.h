@@ -7,6 +7,7 @@
 #include <QStringList>
 #include <QTextEdit>
 #include <QFont>
+#include <QProgressBar>
 
 #include "Processing/Parameters/parameterstore.h"
 #include "Processing/Parameters/deviceparamdefs.h"
@@ -42,6 +43,8 @@ public:
     void setConfigurationAcquiredStatus(bool status);
     void setConfigurationAppliedStatus(bool status);
     void setBDContent(const QString &content);
+    void setBDProgress(int percent, const QString &text);
+    void resetBDProgress();
 
 signals:
     void sigDeviceConfigSet(QMap<QString, QString> changedFields);
@@ -117,6 +120,8 @@ private:
     QPushButton *bdGetButton;
     QPushButton *bdUpdateButton;
     QPushButton *bdFormatButton;
+    QProgressBar *bdProgressBar;
+    QLabel *bdProgressLabel;
     QWidget* createBDMemoryWidget();
 };
 

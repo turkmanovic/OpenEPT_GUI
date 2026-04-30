@@ -126,6 +126,8 @@ public:
 
     void            setConfigurationAppliedStatus(bool status);
 
+    void            setConfigurationBDProgressStatus(int percentage, QString status);
+
     bool            plotVoltageValues(QVector<double> values, QVector<double> keys);
     bool            plotCurrentValues(QVector<double> values, QVector<double> keys);
     bool            plotConsumptionValues(QVector<double> values, QVector<double> keys);

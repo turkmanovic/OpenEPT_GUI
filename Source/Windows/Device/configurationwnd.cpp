@@ -22,7 +22,7 @@
 #define CONFIG_FIELD_WIDTH     170
 #define CONFIG_UNIT_WIDTH      40
 #define CONFIG_ROW_HEIGHT      28
-#define CONFIG_BUTTON_WIDTH    120
+#define CONFIG_BUTTON_WIDTH    32
 #define CONFIG_BUTTON_HEIGHT   32
 
 ConfigurationWnd::ConfigurationWnd(QWidget *parent,
@@ -421,11 +421,11 @@ QHBoxLayout *ConfigurationWnd::createButtonsRow()
     configurationStatusLabel = new QLabel("Device status: Configuration not acquired", this);
     configurationStatusLabel->setMinimumHeight(CONFIG_ROW_HEIGHT);
 
-    setConfigButton = new QPushButton("Set config", this);
-    setConfigButton->setFixedSize(CONFIG_BUTTON_WIDTH, CONFIG_BUTTON_HEIGHT);
+    setConfigButton = new QPushButton("Set", this);
+    setConfigButton->setFixedSize(80, CONFIG_BUTTON_HEIGHT);
 
-    acquireConfigButton = new QPushButton("Acquire config", this);
-    acquireConfigButton->setFixedSize(CONFIG_BUTTON_WIDTH, CONFIG_BUTTON_HEIGHT);
+    acquireConfigButton = new QPushButton("Get", this);
+    acquireConfigButton->setFixedSize(80, CONFIG_BUTTON_HEIGHT);
 
     buttonsLayout->addWidget(configurationStatusLabel);
     buttonsLayout->addStretch();
@@ -696,6 +696,31 @@ void ConfigurationWnd::onBDFormatClicked()
 {
     emit sigBDFormatRequest();
 }
+
+void ConfigurationWnd::setBDProgress(int percent, const QString &text)
+{
+    if(bdProgressBar == nullptr || bdProgressLabel == nullptr)
+        return;
+
+    bdProgressBar->setVisible(true);
+    bdProgressLabel->setVisible(true);
+
+    bdProgressBar->setValue(percent);
+    bdProgressBar->update();
+    bdProgressLabel->setText(text);
+}
+
+void ConfigurationWnd::resetBDProgress()
+{
+    if(bdProgressBar == nullptr || bdProgressLabel == nullptr)
+        return;
+
+    bdProgressBar->setValue(0);
+    bdProgressBar->setVisible(false);
+    bdProgressLabel->setVisible(false);
+}
+
+
 QWidget* ConfigurationWnd::createBDMemoryWidget()
 {
     QWidget *container = new QWidget(this);
@@ -709,20 +734,86 @@ QWidget* ConfigurationWnd::createBDMemoryWidget()
     font.setBold(true);
     title->setFont(font);
 
-    bdGetButton = new QPushButton("Get", this);
+    QString btnStyle = R"(
+    QPushButton {
+        background: transparent;
+        border: none;
+    }
+    QPushButton:hover {
+        background-color: rgba(255,255,255,30);
+    }
+    QPushButton:pressed {
+        background-color: rgba(255,255,255,60);
+    }
+    QToolTip {
+        background-color: white;
+        color: black;
+        border: 1px solid #ccc;
+    }
+    )";
+
+    bdGetButton = new QPushButton(this);
     bdGetButton->setFixedSize(CONFIG_BUTTON_WIDTH, CONFIG_BUTTON_HEIGHT);
+    bdGetButton->setIcon(QIcon(":/images/NewSet/upload.png"));
+    bdGetButton->setIconSize(QSize(24, 24));
+    bdGetButton->setToolTip("Get memory content");
 
-    bdUpdateButton = new QPushButton("Update", this);
+    bdUpdateButton = new QPushButton(this);
     bdUpdateButton->setFixedSize(CONFIG_BUTTON_WIDTH, CONFIG_BUTTON_HEIGHT);
+    bdUpdateButton->setIcon(QIcon(":/images/NewSet/download.png"));
+    bdUpdateButton->setIconSize(QSize(24, 24));
+    bdUpdateButton->setToolTip("Update memory content");
 
-    bdFormatButton = new QPushButton("Format", this);
+    bdFormatButton = new QPushButton(this);
     bdFormatButton->setFixedSize(CONFIG_BUTTON_WIDTH, CONFIG_BUTTON_HEIGHT);
+    bdFormatButton->setIcon(QIcon(":/images/NewSet/format.png"));
+    bdFormatButton->setIconSize(QSize(24, 24));
+    bdFormatButton->setToolTip("Format memory");
+
+    bdGetButton->setStyleSheet(btnStyle);
+    bdUpdateButton->setStyleSheet(btnStyle);
+    bdFormatButton->setStyleSheet(btnStyle);
 
     headerLayout->addWidget(title);
+    headerLayout->addStretch();
+
+
+
+    /* ===== Progress Section ===== */
+
+
+
+    QHBoxLayout *progressLayout = new QHBoxLayout();
+
+
+    bdProgressBar = new QProgressBar(this);
+    bdProgressBar->setRange(0, 100);
+    bdProgressBar->setValue(0);
+    bdProgressBar->setTextVisible(true);
+    bdProgressBar->setMinimumHeight(18);
+    bdProgressBar->setMaximumHeight(18);
+
+    bdProgressLabel = new QLabel("Idle", this);
+    bdProgressLabel->setMinimumHeight(CONFIG_ROW_HEIGHT);
+    bdProgressLabel->setMaximumHeight(CONFIG_ROW_HEIGHT);
+
+    /* inicijalno sakriveno */
+    bdProgressBar->setVisible(true);
+    bdProgressLabel->setVisible(true);
+
+    progressLayout->addWidget(bdProgressBar);
+    progressLayout->addWidget(bdProgressLabel);
+
+    headerLayout->addLayout(progressLayout);
     headerLayout->addStretch();
     headerLayout->addWidget(bdGetButton);
     headerLayout->addWidget(bdUpdateButton);
     headerLayout->addWidget(bdFormatButton);
+
+
+    layout->addLayout(headerLayout);
+
+    /* ===== Text area ===== */
 
     /* Text area */
     bdContentTextEdit = new QTextEdit(this);
@@ -732,7 +823,6 @@ QWidget* ConfigurationWnd::createBDMemoryWidget()
     QFont mono("Courier New");
     bdContentTextEdit->setFont(mono);
 
-    layout->addLayout(headerLayout);
     layout->addWidget(bdContentTextEdit);
 
     /* connections */

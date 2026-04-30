@@ -107,6 +107,9 @@ DeviceContainer::DeviceContainer(QObject *parent,  DeviceWnd* aDeviceWnd, Device
     connect(deviceWnd, SIGNAL(sigSetBDContent(QByteArray)),
             this, SLOT(onDeviceWndSetBDContent(QByteArray)));
 
+    connect(device, SIGNAL(sigBDChunkRead(float)), this, SLOT(onDeviceBDChunkRead(float)));
+    connect(device, SIGNAL(sigBDChunkWrite(float)), this, SLOT(onDeviceBDChunkWrite(float)));
+
 
     connect(deviceWnd, SIGNAL(sigBDFormat()),
             this, SLOT(onDeviceWndBDFormat()));
@@ -539,7 +542,6 @@ void DeviceContainer::onDeviceSamplingPeriodObtained(QString stime)
               "Sampling time successfully obtained and presented",
               "Unable to present sampling time");
 }
-
 void DeviceContainer::onDeviceConfigUpdated(QMap<QString, QString> changedFields)
 {
     auto params = device->parameters();
@@ -568,6 +570,16 @@ void DeviceContainer::onDeviceConfigUpdated(QMap<QString, QString> changedFields
         }
     }
     deviceWnd->setConfigurationAppliedStatus(status);
+}
+
+void DeviceContainer::onDeviceBDChunkRead(float percentage)
+{
+    deviceWnd->setConfigurationBDProgressStatus(percentage, "Reading BD content ...");
+}
+
+void DeviceContainer::onDeviceBDChunkWrite(float percentage)
+{
+    deviceWnd->setConfigurationBDProgressStatus(percentage, "Writting BD content ...");
 }
 void DeviceContainer::onDeviceSamplingTimeChanged(double value)
 {
@@ -662,6 +674,7 @@ void DeviceContainer::onDeviceWndGetBDContent()
     if(exeStatus)
     {
         deviceWnd->setBDContent(content);
+        deviceWnd->setConfigurationBDProgressStatus(100.0, "BD Read Successfully");
     }
 }
 
@@ -671,6 +684,10 @@ void DeviceContainer::onDeviceWndSetBDContent(QByteArray content)
     logResult(exeStatus,
               "Block device content set",
               "Unable to set memory block content");
+    if(exeStatus)
+    {
+        deviceWnd->setConfigurationBDProgressStatus(100.0, "BD Written Successfully");
+    }
 }
 
 void DeviceContainer::onDeviceWndBDFormat()

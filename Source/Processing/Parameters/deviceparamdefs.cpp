@@ -384,7 +384,7 @@ QList<Params::Param> defaultParams()
         {
             {
                 "bdSize",
-                "1EEPROM Memory size",
+                "EEPROM Memory size",
                 "Non Volatile memory size",
                 "",
                 DeviceParamDefs::DeviceConfig,
@@ -398,6 +398,27 @@ QList<Params::Param> defaultParams()
                 {},
                 true,
                 13
+            },
+            0,
+            false
+        },
+        {
+            {
+                "fsPresent",
+                "File System Mounted",
+                "File System Mounted",
+                "",
+                DeviceParamDefs::DeviceConfig,
+                DeviceParamDefs::FileStorage,
+                Params::Access::ReadOnly,
+                Params::Storage::None,
+                Params::Target::Device,
+                false,
+                QVariant(),
+                QVariant(),
+                {"false", "true"},
+                true,
+                14
             },
             0,
             false

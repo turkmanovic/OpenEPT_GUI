@@ -743,6 +743,11 @@ void DeviceWnd::setConfigurationAppliedStatus(bool status)
     configurationWnd->setConfigurationAppliedStatus(status);
 }
 
+void DeviceWnd::setConfigurationBDProgressStatus(int percentage, QString status)
+{
+    configurationWnd->setBDProgress(percentage, status);
+}
+
 
 
 bool DeviceWnd::plotVoltageValues(QVector<double> values, QVector<double> keys)

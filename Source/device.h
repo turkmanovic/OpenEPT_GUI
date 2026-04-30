@@ -128,6 +128,11 @@ public:
     bool        setOCurrentValue(int value);
     bool        getOCurrentValue(int* value = nullptr);
 
+    bool        getBDSize(int* value=nullptr);
+    bool        getBDFContentFull(QString* content);
+    bool        setBDFContent(QByteArray* content);
+    bool        BDFormat();
+
 
     bool        getADCInputClk(QString* clk = NULL);
     double      obtainSamplingTime();    //This function determine time interval from start of until the acquisition end. Dont mix it with acquisiton (sampling) period
@@ -189,6 +194,7 @@ signals:
     void        sigUVoltageValueObtained(float value);
     void        sigOVoltageValueObtained(float value);
     void        sigOCurrentValueObtained(int value);
+    void        sigBDSizeObtained(int value);
     void        sigSamplesNoObained(unsigned int samplesNo);
     void        sigChargingDone();
 

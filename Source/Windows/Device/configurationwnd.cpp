@@ -15,6 +15,8 @@
 #include <QPushButton>
 #include <QSizePolicy>
 #include <QSignalBlocker>
+#include <QFile>
+#include <QFileDialog>
 
 #define CONFIG_LABEL_WIDTH     150
 #define CONFIG_FIELD_WIDTH     170
@@ -129,6 +131,38 @@ void ConfigurationWnd::setConfigurationAppliedStatus(bool status)
     }
 
     refreshStatusBar();
+}
+
+void ConfigurationWnd::setBDContent(const QString &content)
+{
+    if(bdContentTextEdit == nullptr)
+        return;
+
+    QString formatted;
+    int bytesPerLine = 16;
+
+    /* content je HEX string: 2 char = 1 byte */
+    int totalBytes = content.size() / 2;
+
+    for(int i = 0; i < totalBytes; i++)
+    {
+        if(i % bytesPerLine == 0)
+        {
+            formatted += QString("%1: ")
+                         .arg(i, 8, 16, QChar('0'))
+                         .toUpper();
+        }
+
+        QString byte = content.mid(i * 2, 2).toUpper();
+        formatted += byte + " ";
+
+        if((i + 1) % bytesPerLine == 0)
+        {
+            formatted += "\n";
+        }
+    }
+
+    bdContentTextEdit->setPlainText(formatted);
 }
 
 void ConfigurationWnd::rebuildUi()
@@ -251,7 +285,10 @@ QVBoxLayout *ConfigurationWnd::createGroupLayout(Params::GroupId group)
             }
         }
 
-        if(hasVisibleParam == false)
+        bool isFileStorage =
+            (subGroupMeta.id == static_cast<Params::SubGroupId>(DeviceParamDefs::FileStorage));
+
+        if(hasVisibleParam == false && isFileStorage == false)
         {
             continue;
         }
@@ -281,15 +318,18 @@ QGroupBox *ConfigurationWnd::createSubGroupBox(Params::GroupId group,
 
     QList<Params::Param> visibleParams;
 
+    bool isFileStorage =
+        (subGroup == static_cast<Params::SubGroupId>(DeviceParamDefs::FileStorage));
+
     for(const Params::Param &param : params)
     {
-        if(param.meta.visible == true)
+        if(param.meta.visible == true )
         {
             visibleParams.append(param);
         }
     }
 
-    if(visibleParams.isEmpty() == true)
+    if(visibleParams.isEmpty() == true )
     {
         return nullptr;
     }
@@ -298,7 +338,24 @@ QGroupBox *ConfigurationWnd::createSubGroupBox(Params::GroupId group,
 
     QGroupBox *groupBox = new QGroupBox(subGroupMeta.name, this);
     groupBox->setToolTip(subGroupMeta.description);
-    groupBox->setLayout(createParamsGrid(visibleParams));
+
+    if(group == static_cast<Params::GroupId>(DeviceParamDefs::DeviceConfig) &&
+       true == isFileStorage)
+    {
+        QVBoxLayout *vLayout = new QVBoxLayout();
+
+
+        vLayout->addLayout(createParamsGrid(visibleParams));
+
+        vLayout->addWidget(createBDMemoryWidget());
+
+        groupBox->setLayout(vLayout);
+    }
+    else
+    {
+        QGridLayout *grid = createParamsGrid(visibleParams);
+        groupBox->setLayout(grid);
+    }
 
     return groupBox;
 }
@@ -573,7 +630,128 @@ bool ConfigurationWnd::isApplicationParam(const QString &key) const
     }
 
     return m_params->getParamMeta(key).group ==
-           static_cast<Params::GroupId>(DeviceParamDefs::Group::ApplicationConfig);
+            static_cast<Params::GroupId>(DeviceParamDefs::Group::ApplicationConfig);
+}
+void ConfigurationWnd::onBDGetClicked()
+{
+    emit sigBDContentGetRequest();
+}
+
+void ConfigurationWnd::onBDUpdateClicked()
+{
+    QString filePath = QFileDialog::getOpenFileName(
+                this,
+                "Select file to upload",
+                "",
+                "Binary (*.bin);;Text (*.txt *.hex);;All Files (*)");
+
+    if(filePath.isEmpty())
+        return;
+
+    QFile file(filePath);
+
+    if(!file.open(QIODevice::ReadOnly))
+        return;
+
+    QByteArray data;
+
+    /* ================= BIN FILE ================= */
+    if(filePath.endsWith(".bin"))
+    {
+        data = file.readAll();
+    }
+    else
+    {
+        /* ================= TEXT / HEX FILE ================= */
+        QString text = file.readAll();
+
+        QString clean = text;
+        clean.remove(' ');
+        clean.remove('\n');
+        clean.remove('\r');
+
+        /* ako je HEX */
+        QRegularExpression hexRegex("^[0-9A-Fa-f]+$");
+
+        if(hexRegex.match(clean).hasMatch())
+        {
+            data = QByteArray::fromHex(clean.toUtf8());
+        }
+        else
+        {
+            /* fallback: ASCII tekst */
+            data = text.toUtf8();
+        }
+    }
+
+    file.close();
+
+    if(data.isEmpty())
+        return;
+
+    emit sigBDContentSetRequest(data);
+}
+
+void ConfigurationWnd::onBDFormatClicked()
+{
+    emit sigBDFormatRequest();
+}
+QWidget* ConfigurationWnd::createBDMemoryWidget()
+{
+    QWidget *container = new QWidget(this);
+    QVBoxLayout *layout = new QVBoxLayout(container);
+
+    /* Header */
+    QHBoxLayout *headerLayout = new QHBoxLayout();
+
+    QLabel *title = new QLabel("Memory Content", this);
+    QFont font = title->font();
+    font.setBold(true);
+    title->setFont(font);
+
+    bdGetButton = new QPushButton("Get", this);
+    bdGetButton->setFixedSize(CONFIG_BUTTON_WIDTH, CONFIG_BUTTON_HEIGHT);
+
+    bdUpdateButton = new QPushButton("Update", this);
+    bdUpdateButton->setFixedSize(CONFIG_BUTTON_WIDTH, CONFIG_BUTTON_HEIGHT);
+
+    bdFormatButton = new QPushButton("Format", this);
+    bdFormatButton->setFixedSize(CONFIG_BUTTON_WIDTH, CONFIG_BUTTON_HEIGHT);
+
+    headerLayout->addWidget(title);
+    headerLayout->addStretch();
+    headerLayout->addWidget(bdGetButton);
+    headerLayout->addWidget(bdUpdateButton);
+    headerLayout->addWidget(bdFormatButton);
+
+    /* Text area */
+    bdContentTextEdit = new QTextEdit(this);
+    bdContentTextEdit->setReadOnly(true);
+    bdContentTextEdit->setMinimumHeight(250);
+
+    QFont mono("Courier New");
+    bdContentTextEdit->setFont(mono);
+
+    layout->addLayout(headerLayout);
+    layout->addWidget(bdContentTextEdit);
+
+    /* connections */
+    connect(bdGetButton,
+            &QPushButton::clicked,
+            this,
+            &ConfigurationWnd::onBDGetClicked);
+
+    connect(bdUpdateButton,
+            &QPushButton::clicked,
+            this,
+            &ConfigurationWnd::onBDUpdateClicked);
+
+    connect(bdFormatButton,
+            &QPushButton::clicked,
+            this,
+            &ConfigurationWnd::onBDFormatClicked);
+
+    return container;
 }
 
 void ConfigurationWnd::onFieldChanged()

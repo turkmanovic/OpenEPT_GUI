@@ -5,6 +5,8 @@
 #include <QMap>
 #include <QString>
 #include <QStringList>
+#include <QTextEdit>
+#include <QFont>
 
 #include "Processing/Parameters/parameterstore.h"
 #include "Processing/Parameters/deviceparamdefs.h"
@@ -39,6 +41,7 @@ public:
 
     void setConfigurationAcquiredStatus(bool status);
     void setConfigurationAppliedStatus(bool status);
+    void setBDContent(const QString &content);
 
 signals:
     void sigDeviceConfigSet(QMap<QString, QString> changedFields);
@@ -47,11 +50,20 @@ signals:
 
     void sigDeviceConfigAcquireRequest();
 
+    void sigBDContentGetRequest();
+    void sigBDContentSetRequest(QByteArray content);
+    void sigBDFormatRequest();
+
+
 private slots:
     void onFieldChanged();
     void onParamChanged(QString key, QString value);
     void onSetConfigClicked();
     void onAcquireConfigClicked();
+
+    void onBDGetClicked();
+    void onBDUpdateClicked();
+    void onBDFormatClicked();
 
 private:
     Ui::ConfigurationWnd *ui;
@@ -100,6 +112,12 @@ private:
 
     bool isDeviceParam(const QString &key) const;
     bool isApplicationParam(const QString &key) const;
+
+    QTextEdit *bdContentTextEdit;
+    QPushButton *bdGetButton;
+    QPushButton *bdUpdateButton;
+    QPushButton *bdFormatButton;
+    QWidget* createBDMemoryWidget();
 };
 
 #endif // CONFIGURATIONWND_H

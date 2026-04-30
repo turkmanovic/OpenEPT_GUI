@@ -48,6 +48,57 @@ control_link_status_t   ControlLink::establishLink(QString aIpAddress, QString a
     return linkStatus;
 }
 
+bool ControlLink::prvReadResponse(QString* response, int timeout)
+{
+    QByteArray receivedData;
+
+    while(true)
+    {
+        if(!tcpSocket->waitForReadyRead(timeout))
+        {
+            *response = "Unable to read data";
+            return false;
+        }
+
+        receivedData += tcpSocket->readAll();
+
+        int endIndex = receivedData.indexOf("\r\n");
+        if(endIndex != -1)
+        {
+            QByteArray fullResponse = receivedData.left(endIndex);
+
+            if(fullResponse.size() < 4 ||
+               fullResponse[0] != 'O' ||
+               fullResponse[1] != 'K' ||
+               fullResponse[2] != ' ')
+            {
+                *response = "ERROR";
+                return false;
+            }
+
+            char format = fullResponse[3];
+            QByteArray payload = fullResponse.mid(4);
+
+            if(format == 'H')
+            {
+                *response = QString::fromUtf8(payload);
+            }
+            else if(format == 'B')
+            {
+                *response = payload.toHex().toUpper();
+            }
+            else
+            {
+                *response = "Unknown format";
+                return false;
+            }
+
+            return true;
+        }
+    }
+}
+
+
 void ControlLink::reconnect()
 {
     tcpSocket->connectToHost(ipAddress, portNumber);
@@ -57,55 +108,83 @@ void ControlLink::reconnect()
 bool                    ControlLink::getDeviceName(QString *deviceName)
 {
     QString response;
-    if(!executeCommand("device hello", &response, CONTROL_LINK_COMMAND_TIMEOUT)) return false;
+    if(!executeCommand(QString("device hello"), &response, CONTROL_LINK_COMMAND_TIMEOUT)) return false;
     *deviceName = response;
     return true;
 }
-bool                    ControlLink::executeCommand(QString command, QString* response, int timeout)
+bool ControlLink::executeCommand(QString command, QString* response, int timeout)
 {
-    QByteArray  receivedData;
-    QByteArray  dataToSend(command.toUtf8());
-    QString     receivedResponse = "";
-    receivedData.clear();
+    if(response == nullptr)
+        return false;
+
+    response->clear();
+
     if(linkStatus != CONTROL_LINK_STATUS_ESTABLISHED)
     {
-        *response = QString("Control link not established");
+        *response = "Control link not established";
         return false;
     }
+
+    QByteArray packet;
+
+    /* HEADER */
+    packet.append((char)0xA5);
+    packet.append((char)0xA5);
+    packet.append('H');
+
+    /* PAYLOAD */
+    packet.append(command.toUtf8());
+
     tcpSocket->flush();
-    tcpSocket->write(dataToSend);
-    tcpSocket->waitForBytesWritten();
-    if(tcpSocket->waitForReadyRead(timeout) != true)
+    tcpSocket->write(packet);
+    tcpSocket->waitForBytesWritten(timeout);
+
+    return prvReadResponse(response, timeout);
+}
+
+bool ControlLink::executeCommand(QByteArray request, QString* response, int timeout)
+{
+    if(response == nullptr)
+        return false;
+
+    response->clear();
+
+    if(linkStatus != CONTROL_LINK_STATUS_ESTABLISHED)
     {
-        *response = QString("Unable to read data");
+        *response = "Control link not established";
         return false;
     }
-    receivedData = tcpSocket->readAll();
-    QString responseAsString(receivedData);
-    /* Check did we receive "\r\n" */
-    if(!responseAsString.contains("\r\n"))
+
+    QByteArray packet;
+
+    /* HEADER */
+    packet.append((char)0xA5);
+    packet.append((char)0xA5);
+    packet.append('B');
+
+    /* LENGTH (uint16_t, big endian) */
+    uint16_t len = request.size();
+    packet.append((char)(len & 0xFF));
+    packet.append((char)((len >> 8) & 0xFF));
+
+    /* PAYLOAD */
+    packet.append(request);
+
+    tcpSocket->flush();
+
+    if(tcpSocket->write(packet) == -1)
     {
-        *response = QString("End of command not detected");
+        *response = "Write failed";
         return false;
     }
-    /* Split response to identify OK*/
-    QStringList responseParts = responseAsString.split(" ");
-    if(responseParts[0] != "OK")
+
+    if(!tcpSocket->waitForBytesWritten(timeout))
     {
-        *response = QString("ERROR");
+        *response = "Write timeout";
         return false;
     }
-    for(int i = 1; i < responseParts.size(); i++)
-    {
-        *response += responseParts[i];
-        if((i+1) !=responseParts.size())
-        {
-            *response += " ";
-        }
-    }
-    /*take substring until*/
-    *response = (*response).split("\r\n")[0];
-    return true;
+
+    return prvReadResponse(response, timeout);
 }
 
 QString ControlLink::getDeviceIP_Addr()

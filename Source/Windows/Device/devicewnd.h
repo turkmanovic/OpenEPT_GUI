@@ -109,6 +109,9 @@ public:
     bool            setOVoltageValue(float value);
     bool            setOCurrentValue(int value);
 
+    bool            setBDSize(int value);
+    bool            setBDContent(QString content);
+
 
     bool            setChargerCurrent(int current);
     bool            setChargerTermCurrent(int current);
@@ -180,6 +183,10 @@ signals:
     void            sigBatteryStatusChanged(bool status);
     void            sigResetProtection();
 
+    void            sigReadFullBDContent();
+    void            sigSetBDContent(QByteArray content);
+    void            sigBDFormat();
+
     void            sigCalibrationUpdated();
     void            sigDeviceConfigSet(QMap<QString, QString> changedFields);
 protected:
@@ -215,6 +222,10 @@ public slots:
     void            onBatteryStatusChanged(bool status);
     void            onResetProtection();
     void            onChDschSaveToFileChanged(bool state);
+
+    void            onConfWndGetBDContent();
+    void            onConfWndSetBDContent(QByteArray content);
+    void            onConfWndBDFormat();
 
 
     void            onConsumptionProfileNameChanged();

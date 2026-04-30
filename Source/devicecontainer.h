@@ -33,20 +33,20 @@ public slots:
     void    onDeviceWndAcquisitionStart();
     void    onDeviceWndAcquisitionStop();
     void    onDeviceWndAcquisitionPause();
-    void    onDeviceWndAdvConfGet();
     void    onDeviceWndAcquisitionRefresh();
-    void    onDeviceWndNewConfiguration(QVariant newConfig);
+
+
     void    onDeviceWndClosed();
     void    onDeviceWndSaveToFileChanged(bool saveToFile);
     void    onDeviceWndEPEnable(bool aEpEnabled);
     void    onDeviceWndMaxNumberOfBuffersChanged(unsigned int maxNumber);
-    void    onDeviceWndConsumptionTypeChanged(QString aConsumptionType);
-    void    onDeviceWndMeasurementTypeChanged(QString aMeasurementType);
     void    onDeviceWndConsumptionProfileNameChanged(QString aConsumptionProfileName);
+
     void    onDeviceWndLoadStatusChanged(bool status);
     void    onDeviceWndPPathStatusChanged(bool status);
     void    onDeviceWndBatteryStatusChanged(bool status);
     void    onDeviceWndResetProtection();
+
     void    onDeviceWndLoadCurrentSetValue(unsigned int current);
     void    onDeviceWndLoadCurrentSetStatus(bool status);
     void    onDeviceWndChargingCurrentSetValue(unsigned int current);
@@ -54,6 +54,10 @@ public slots:
     void    onDeviceWndChargingTermVoltageSetValue(float voltage);
     void    onDeviceWndChargingCurrentSetStatus(bool status);
     void    onDeviceWndChDschSaveToFileChanged(bool saveToFile);
+    void    onDeviceWndGetBDContent();
+    void    onDeviceWndSetBDContent(QByteArray content);
+    void    onDeviceWndBDFormat();
+
 
     void    onDeviceControlLinkDisconnected();
     void    onDeviceControlLinkConnected();
@@ -62,6 +66,7 @@ public slots:
     void    onDeviceHandleControlMsgResponse(QString msg, bool exeStatus);
     void    onDeviceSamplingPeriodObtained(QString stime);
     void    onDeviceSamplingTimeChanged(double value);
+
     void    onDeviceLoadStateObtained(bool state);
     void    onDeviceBatStateObtained(bool state);
     void    onDevicePPathStateObtained(bool state);
@@ -73,6 +78,7 @@ public slots:
     void    onDeviceUVoltageValueObtained(float value);
     void    onDeviceOVoltageValueObtained(float value);
     void    onDeviceOCurrentValueObtained(int value);
+    void    onDeviceBDSizeObtained(int value);
 
     void    onDeviceConfigUpdated(QMap<QString, QString> changedFields);
 
@@ -111,12 +117,9 @@ private:
     FileProcessing*                 fileProcessing;
 
     void                            fillDeviceSetFunctions();
-    device_adc_resolution_t         getAdcResolutionFromString(QString resolution);
-    device_adc_clock_div_t          getAdcClockDivFromString(QString clkDiv);
-    device_adc_ch_sampling_time_t   getAdcChSamplingTimeFromString(QString chstime);
-    device_adc_averaging_t          getAdcAvgRatioFromString(QString avgRatio);
-    device_adc_t                    getAdcFromString(QString adc);
     bool                            createSubDir(const QString &subDirName, QString &fullPath);
+
+    void                            logResult(bool status, const QString& successMsg, const QString& errorMsg);
 
     double                          elapsedTime;
     QTimer                          *timer;

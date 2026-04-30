@@ -787,6 +787,9 @@ bool Device::setUVoltageValue(float value)
 
     if(response != "OK") return false;
 
+    m_params->setParamValue("underVoltageValue", QString::number(value));
+
+
     return true;
 }
 
@@ -801,6 +804,7 @@ bool Device::getUVoltageValue(float *value)
 
     if(value != nullptr) *value = tmp;
 
+    m_params->setParamValue("underVoltageValue", QString::number(tmp));
     emit sigUVoltageValueObtained(tmp);
 
     return true;
@@ -814,6 +818,9 @@ bool Device::setOVoltageValue(float value)
     if(!controlLink->executeCommand(command, &response, 1000)) return false;
 
     if(response != "OK") return false;
+
+
+    m_params->setParamValue("overVoltageValue", QString::number(value));
 
     return true;
 }
@@ -829,6 +836,7 @@ bool Device::getOVoltageValue(float *value)
 
     if(value != nullptr) *value = tmp;
 
+    m_params->setParamValue("overVoltageValue", QString::number(tmp));
     emit sigOVoltageValueObtained(tmp);
 
     return true;
@@ -843,6 +851,7 @@ bool Device::setOCurrentValue(int value)
 
     if(response != "OK") return false;
 
+    m_params->setParamValue("overCurrentValue", QString::number(value));
     return true;
 }
 
@@ -857,8 +866,125 @@ bool Device::getOCurrentValue(int *value)
 
     if(value != nullptr) *value = tmp;
 
+    m_params->setParamValue("overCurrentValue", QString::number(tmp));
     emit sigOCurrentValueObtained(tmp);
 
+    return true;
+}
+
+bool Device::getBDSize(int *value)
+{
+    QString response;
+    QString command = "device fsystem bd size get";
+
+    if(!controlLink->executeCommand(command, &response, 1000)) return false;
+
+    int tmp = response.toInt();
+
+    if(value != nullptr) *value = tmp;
+
+    m_params->setParamValue("bdSize", QString::number(tmp));
+    emit sigBDSizeObtained(tmp);
+
+    return true;
+}
+
+bool Device::getBDFContentFull(QString *content)
+{
+    if(controlLink == NULL || content == nullptr)
+        return false;
+
+    int bdSize = m_params->getParamValue("bdSize").toInt();
+
+    if(bdSize <= 0)
+        return false;
+
+    const int chunkSize = 512;
+    QString fullContent = "";
+
+    for(int offset = 0; offset < bdSize; offset += chunkSize)
+    {
+        int currentSize = chunkSize;
+
+        if((offset + currentSize) > bdSize)
+        {
+            currentSize = bdSize - offset;
+        }
+
+        QString command = "device fsystem bd read -offset=" +
+                          QString::number(offset) +
+                          " -size=" +
+                          QString::number(currentSize);
+
+        QString response;
+
+        if(!controlLink->executeCommand(command, &response, 3000))
+        {
+            return false;
+        }
+
+        /* response je HEX payload */
+        fullContent += response;
+
+    }
+
+    *content = fullContent;
+
+    return true;
+}
+
+bool Device::setBDFContent(QByteArray *content)
+{
+    if(controlLink == NULL || content == nullptr)
+        return false;
+
+    int totalBytes = content->size();
+
+    if(totalBytes == 0)
+        return false;
+
+    const int chunkBytes = 128;
+
+    for(int offset = 0; offset < totalBytes; offset += chunkBytes)
+    {
+        int currentBytes = chunkBytes;
+
+        if((offset + currentBytes) > totalBytes)
+        {
+            currentBytes = totalBytes - offset;
+        }
+
+        QByteArray chunk = content->mid(offset, currentBytes);
+
+        /* HEX encoding (KLJUČNO) */
+        QByteArray hexData = chunk;
+
+        /* formiranje komande kao QByteArray */
+        QByteArray command;
+        command += "device fsystem bd write -offset=";
+        command += QByteArray::number(offset);
+        command += " -size=";
+        command += QByteArray::number(currentBytes);
+        command += " -data=";
+        command += hexData;
+        command += " \r\n";
+
+        QString response;
+
+        if(!controlLink->executeCommand(command, &response, 3000))
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool Device::BDFormat()
+{
+    QString response;
+    QString command = "device fsystem bd format";
+    if(!controlLink->executeCommand(command, &response, 5000)) return false;
     return true;
 }
 
@@ -907,6 +1033,7 @@ bool Device::acquireDeviceConfiguration(device_adc_t aAdc)
     getOVoltageValue();
     getOCurrentStatus();
     getOCurrentValue();
+    getBDSize();
     getChargerCurrent();
     getChargerTermCurrent();
     getChargerTermVoltage();

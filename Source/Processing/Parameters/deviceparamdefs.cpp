@@ -383,6 +383,27 @@ QList<Params::Param> defaultParams()
         },
         {
             {
+                "bdSize",
+                "1EEPROM Memory size",
+                "Non Volatile memory size",
+                "",
+                DeviceParamDefs::DeviceConfig,
+                DeviceParamDefs::FileStorage,
+                Params::Access::ReadOnly,
+                Params::Storage::None,
+                Params::Target::Device,
+                {},
+                {},
+                {},
+                {},
+                true,
+                13
+            },
+            0,
+            false
+        },
+        {
+            {
                 "overCurrentValue",
                 "Over Current Protection",
                 "Over Current Protection Threshold Value",
@@ -397,7 +418,7 @@ QList<Params::Param> defaultParams()
                 0,
                 {},
                 true,
-                13
+                14
             },
             0,
             false

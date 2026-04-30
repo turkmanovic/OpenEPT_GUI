@@ -328,6 +328,21 @@ void DeviceWnd::onChDschSaveToFileChanged(bool state)
     emit sigChDschSaveToFileToggled(state);
 }
 
+void DeviceWnd::onConfWndGetBDContent()
+{
+    emit sigReadFullBDContent();
+}
+
+void DeviceWnd::onConfWndSetBDContent(QByteArray content)
+{
+    emit sigSetBDContent(content);
+}
+
+void DeviceWnd::onConfWndBDFormat()
+{
+    emit sigBDFormat();
+}
+
 void DeviceWnd::onConsolePressed()
 {
     consoleWnd->show();
@@ -415,6 +430,21 @@ void DeviceWnd::setParameters(DeviceParameters *params)
             &ConfigurationWnd::sigDeviceConfigSet,
             this,
             &DeviceWnd::onDeviceConfigSet);
+
+    connect(configurationWnd,
+            &ConfigurationWnd::sigBDContentGetRequest,
+            this,
+            &DeviceWnd::onConfWndGetBDContent);
+
+    connect(configurationWnd,
+            &ConfigurationWnd::sigBDContentSetRequest,
+            this,
+            &DeviceWnd::onConfWndSetBDContent);
+
+    connect(configurationWnd,
+            &ConfigurationWnd::sigBDFormatRequest,
+            this,
+            &DeviceWnd::onConfWndBDFormat);
 }
 
 void DeviceWnd::setDeviceNetworkState(device_state_t aDeviceState)
@@ -622,6 +652,19 @@ bool DeviceWnd::setOVoltageValue(float value)
 bool DeviceWnd::setOCurrentValue(int value)
 {
     configurationWnd->setParamValue("overCurrentValue", QString::number(value));
+    return true;
+}
+
+
+bool DeviceWnd::setBDSize(int value)
+{
+    configurationWnd->setParamValue("bdSize", QString::number(value));
+    return true;
+}
+
+bool DeviceWnd::setBDContent(QString content)
+{
+    configurationWnd->setBDContent(content);
     return true;
 }
 

@@ -21,12 +21,13 @@ namespace DeviceParamDefs
         ADC = 3,
         EnergyPoint = 4,
         Processing = 5,
-        Load = 6,
-        Charger = 6,
-        Battery = 7,
-        Protection = 8,
-        Statistics = 10,
-        FileStorage = 11
+        Calibration = 6,
+        Load = 7,
+        Charger = 8,
+        Battery = 9,
+        Protection = 10,
+        Statistics = 11,
+        FileStorage = 12,
     };
 
     QList<Params::GroupMeta> defaultGroupMeta();

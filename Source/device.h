@@ -114,6 +114,17 @@ public:
     bool        getAvrRatio(device_adc_averaging_t* averagingRatio=NULL);
     bool        setSamplingPeriod(QString time);
     bool        getSamplingPeriod(QString* time = NULL);
+
+    bool        getCalParam();
+    bool        setCalParam();
+
+    bool        getGainParam();
+    bool        getShuntParam();
+
+    bool        getMAC();
+    bool        getHWSerial();
+    bool        getSWSerial();
+
     bool        setVOffset(QString off);
     bool        getVOffset(QString* off=NULL);
     bool        setCOffset(QString off);
@@ -181,6 +192,17 @@ signals:
     void        sigResolutionObtained(QString resolution);
     void        sigChSampleTimeObtained(QString chstime);
     void        sigSampleTimeObtained(QString stime);
+
+    void        sigCalParamObtained(float vref, float voff, float vcor, float coff, float ccor);
+    void        sigShuntParamObtained(float shunt);
+    void        sigGainParamObtained(float gain);
+
+    void        sigMACObtained(QString mac);
+    void        sigHWSerialObtained(QString serial);
+    void        sigSWSerialObtained(QString version);
+
+
+
     void        sigClockDivObtained(QString clkDiv);
     void        sigAdcInputClkObtained(QString inClk);
     void        sigCOffsetObtained(QString coffset);

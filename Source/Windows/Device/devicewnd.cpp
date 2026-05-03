@@ -130,6 +130,7 @@ DeviceWnd::DeviceWnd(QWidget *parent) :
     connect(consoleWnd, SIGNAL(sigControlMsgSend(QString)), this, SLOT(onNewControlMsgRcvd(QString)));
 
     connect(calibrationWnd, SIGNAL(sigCalibrationDataUpdated()), this, SLOT(onCalibrationUpdated()));
+    connect(calibrationWnd, SIGNAL(sigCalibrationStoreRequest()), this, SLOT(onCalibrationStoreRequest()));
 
     connect(ui->dischargeControlPusb1, SIGNAL(clicked(bool)), this, SLOT(onCalibrationButtonPressed(bool)));
     connect(ui->dischargeControlPusb2, SIGNAL(clicked(bool)), this, SLOT(onEnenergyControlButtonPressed(bool)));
@@ -152,6 +153,11 @@ void DeviceWnd::onPlotScatterNameAndKey(QString name, double key)
 void DeviceWnd::onCalibrationUpdated()
 {
     emit sigCalibrationUpdated();
+}
+
+void DeviceWnd::onCalibrationStoreRequest()
+{
+    emit sigCalibrationStoreRequest();
 }
 
 void DeviceWnd::onSetConsumptionName()

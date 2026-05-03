@@ -39,6 +39,8 @@ DeviceContainer::DeviceContainer(QObject *parent,  DeviceWnd* aDeviceWnd, Device
     connect(deviceWnd,  SIGNAL(sigMeasurementTypeChanged(QString)),                 this, SLOT(onDeviceWndMeasurementTypeChanged(QString)));
     connect(deviceWnd,  SIGNAL(sigConsumptionProfileNameChanged(QString)),          this, SLOT(onDeviceWndConsumptionProfileNameChanged(QString)));
     connect(deviceWnd,  SIGNAL(sigCalibrationUpdated()),                            this, SLOT(onDeviceWndCalibrationUpdated()));
+    connect(deviceWnd,  SIGNAL(sigCalibrationStoreRequest()),                       this, SLOT(onDeviceWndCalibrationStoreRequest()));
+
     connect(deviceWnd,  SIGNAL(sigLoadStatusChanged(bool)),                         this, SLOT(onDeviceWndLoadStatusChanged(bool)));
     connect(deviceWnd,  SIGNAL(sigPPathStatusChanged(bool)),                        this, SLOT(onDeviceWndPPathStatusChanged(bool)));
     connect(deviceWnd,  SIGNAL(sigBatteryStatusChanged(bool)),                      this, SLOT(onDeviceWndBatteryStatusChanged(bool)));
@@ -225,6 +227,40 @@ void DeviceContainer::fillDeviceSetFunctions()
         p.getFn = [this](){
             device->getResolution();
         };
+    }
+
+    /**************************************************************
+     * CALIBRATION (ReadOnly / handled via batch command)
+     **************************************************************/
+
+    {
+        auto &p = params->getParamRef("adcVRef");
+        p.setFn = nullptr;
+        p.getFn = nullptr;
+    }
+
+    {
+        auto &p = params->getParamRef("adcVOff");
+        p.setFn = nullptr;
+        p.getFn = nullptr;
+    }
+
+    {
+        auto &p = params->getParamRef("adcVCor");
+        p.setFn = nullptr;
+        p.getFn = nullptr;
+    }
+
+    {
+        auto &p = params->getParamRef("adcVCOffset");
+        p.setFn = nullptr;
+        p.getFn = nullptr;
+    }
+
+    {
+        auto &p = params->getParamRef("adcCCor");
+        p.setFn = nullptr;
+        p.getFn = nullptr;
     }
 }
 DeviceContainer::~DeviceContainer()
@@ -804,6 +840,14 @@ void DeviceContainer::onDeviceMeasurementEnergyFlowStatusChanged(charginganalysi
 void DeviceContainer::onDeviceWndCalibrationUpdated()
 {
     device->calibrationUpdated();
+}
+
+void DeviceContainer::onDeviceWndCalibrationStoreRequest()
+{
+    bool ok = device->setCalParam();
+    logResult(ok,
+              "Calibration parameters sucesfully updated and stored on device",
+              "Unable to update calibration parameters");
 }
 
 

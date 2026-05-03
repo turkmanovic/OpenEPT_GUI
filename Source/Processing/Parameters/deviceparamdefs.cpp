@@ -67,40 +67,46 @@ QList<Params::SubGroupMeta> defaultSubGroupMeta()
             5
         },
         {
+            DeviceParamDefs::Calibration,
+            "Calibration",
+            "Application-side parameters used for calibration",
+            6
+        },
+        {
             DeviceParamDefs::Load,
             "Load",
             "Load control and load-related runtime values.",
-            6
+            7
         },
         {
             DeviceParamDefs::Charger,
             "Charger",
             "Battery charger configuration and runtime values.",
-            7
+            8
         },
         {
             DeviceParamDefs::Battery,
             "Battery",
             "Battery path and battery-related runtime values.",
-            8
+            9
         },
         {
             DeviceParamDefs::Protection,
             "Protection",
             "Protection and fault indication states.",
-            9
+            10
         },
         {
             DeviceParamDefs::Statistics,
             "Statistics",
             "Runtime statistics and monitoring values.",
-            10
+            11
         },
         {
             DeviceParamDefs::FileStorage,
             "File Storage",
             "Application-side file saving parameters.",
-            11
+            12
         }
     };
 }
@@ -122,6 +128,69 @@ QList<Params::Param> defaultParams()
                 "",
                 QVariant(),
                 QVariant(),
+                {},
+                true,
+                0
+            },
+            "",
+            false
+        },
+        {
+            {
+                "deviceSerial",
+                "Serial Number",
+                "Device Serial Number",
+                "",
+                DeviceParamDefs::DeviceConfig,
+                DeviceParamDefs::General,
+                Params::Access::ReadOnly,
+                Params::Storage::LoadSave,
+                Params::Target::Device,
+                {},
+                {},
+                {},
+                {},
+                true,
+                1
+            },
+            "",
+            false
+        },
+        {
+            {
+                "fwVersion",
+                "Firmware Version",
+                "Device Firmware Version",
+                "",
+                DeviceParamDefs::DeviceConfig,
+                DeviceParamDefs::General,
+                Params::Access::ReadOnly,
+                Params::Storage::LoadSave,
+                Params::Target::Device,
+                {},
+                {},
+                {},
+                {},
+                true,
+                2
+            },
+            "",
+            false
+        },
+        {
+            {
+                "deviceMac",
+                "Device MAC Address",
+                "Device MAC Address",
+                "",
+                DeviceParamDefs::DeviceConfig,
+                DeviceParamDefs::Network,
+                Params::Access::ReadOnly,
+                Params::Storage::LoadSave,
+                Params::Target::Device,
+                {},
+                {},
+                {},
                 {},
                 true,
                 0
@@ -404,27 +473,6 @@ QList<Params::Param> defaultParams()
         },
         {
             {
-                "fsPresent",
-                "File System Mounted",
-                "File System Mounted",
-                "",
-                DeviceParamDefs::DeviceConfig,
-                DeviceParamDefs::FileStorage,
-                Params::Access::ReadOnly,
-                Params::Storage::None,
-                Params::Target::Device,
-                false,
-                QVariant(),
-                QVariant(),
-                {"false", "true"},
-                true,
-                14
-            },
-            0,
-            false
-        },
-        {
-            {
                 "overCurrentValue",
                 "Over Current Protection",
                 "Over Current Protection Threshold Value",
@@ -440,6 +488,174 @@ QList<Params::Param> defaultParams()
                 {},
                 true,
                 14
+            },
+            0,
+            false
+        },
+        {
+            {
+                "adcVRef",
+                "ADC Voltage Ref",
+                "ADC Voltage Reference voltage",
+                "V",
+                DeviceParamDefs::DeviceConfig,
+                DeviceParamDefs::Calibration,
+                Params::Access::ReadOnly,
+                Params::Storage::SaveOnly,
+                Params::Target::Device,
+                {},
+                {},
+                {},
+                {},
+                true,
+                15
+            },
+            0,
+            false
+        },
+        {
+            {
+                "adcVOff",
+                "ADC Voltage Offset",
+                "ADC Voltage Offset used during processing on host side",
+                "V",
+                DeviceParamDefs::DeviceConfig,
+                DeviceParamDefs::Calibration,
+                Params::Access::ReadOnly,
+                Params::Storage::SaveOnly,
+                Params::Target::Device,
+                {},
+                {},
+                {},
+                {},
+                true,
+                16
+            },
+            0,
+            false
+        },
+        {
+            {
+                "adcVCor",
+                "ADC Voltage Correction",
+                "ADC Voltage Correction used during processing on host side",
+                "",
+                DeviceParamDefs::DeviceConfig,
+                DeviceParamDefs::Calibration,
+                Params::Access::ReadOnly,
+                Params::Storage::SaveOnly,
+                Params::Target::Device,
+                {},
+                {},
+                {},
+                {},
+                true,
+                17
+            },
+            0,
+            false
+        },
+        {
+            {
+                "adcVCOffset",
+                "ADC Voltage Current offset",
+                "Voltage offset for bidirectional measurement",
+                "V",
+                DeviceParamDefs::DeviceConfig,
+                DeviceParamDefs::Calibration,
+                Params::Access::ReadOnly,
+                Params::Storage::SaveOnly,
+                Params::Target::Device,
+                {},
+                {},
+                {},
+                {},
+                true,
+                18
+            },
+            0,
+            false
+        },
+        {
+            {
+                "adcCCor",
+                "Current Correction",
+                "Current correction",
+                "",
+                DeviceParamDefs::DeviceConfig,
+                DeviceParamDefs::Calibration,
+                Params::Access::ReadOnly,
+                Params::Storage::SaveOnly,
+                Params::Target::Device,
+                {},
+                {},
+                {},
+                {},
+                true,
+                19
+            },
+            0,
+            false
+        },
+        {
+            {
+                "shuntValue",
+                "Current Sensing Shunt",
+                "Current Sensing Shunt",
+                "Ohm",
+                DeviceParamDefs::DeviceConfig,
+                DeviceParamDefs::Calibration,
+                Params::Access::ReadOnly,
+                Params::Storage::SaveOnly,
+                Params::Target::Device,
+                {},
+                {},
+                {},
+                {},
+                true,
+                20
+            },
+            0,
+            false
+        },
+        {
+            {
+                "gainValue",
+                "OP Amplifier Gain",
+                "Current Operational Amplifier Gain",
+                "",
+                DeviceParamDefs::DeviceConfig,
+                DeviceParamDefs::Calibration,
+                Params::Access::ReadOnly,
+                Params::Storage::SaveOnly,
+                Params::Target::Device,
+                {},
+                {},
+                {},
+                {},
+                true,
+                21
+            },
+            0,
+            false
+        },
+        {
+            {
+                "fsPresent",
+                "File System Mounted",
+                "File System Mounted",
+                "",
+                DeviceParamDefs::DeviceConfig,
+                DeviceParamDefs::FileStorage,
+                Params::Access::ReadOnly,
+                Params::Storage::None,
+                Params::Target::Device,
+                false,
+                QVariant(),
+                QVariant(),
+                {"false", "true"},
+                true,
+                21
             },
             0,
             false

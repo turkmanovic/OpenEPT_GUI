@@ -62,38 +62,54 @@ bool ControlLink::prvReadResponse(QString* response, int timeout)
 
         receivedData += tcpSocket->readAll();
 
-        int endIndex = receivedData.indexOf("\r\n");
-        if(endIndex != -1)
+        /* ===== MIN HEADER SIZE ===== */
+        if(receivedData.size() < 4)
+            continue;
+
+        if(receivedData[0] != 'O' || receivedData[1] != 'K' || receivedData[2] != ' ')
         {
-            QByteArray fullResponse = receivedData.left(endIndex);
+            *response = "ERROR";
+            return false;
+        }
 
-            if(fullResponse.size() < 4 ||
-               fullResponse[0] != 'O' ||
-               fullResponse[1] != 'K' ||
-               fullResponse[2] != ' ')
-            {
-                *response = "ERROR";
-                return false;
-            }
+        char format = receivedData[3];
 
-            char format = fullResponse[3];
-            QByteArray payload = fullResponse.mid(4);
+        /* ===== HEX / TEXT MODE ===== */
+        if(format == 'H')
+        {
+            int endIndex = receivedData.indexOf("\r\n");
+            if(endIndex == -1)
+                continue;
 
-            if(format == 'H')
-            {
-                *response = QString::fromUtf8(payload);
-            }
-            else if(format == 'B')
-            {
-                *response = payload.toHex().toUpper();
-            }
-            else
-            {
-                *response = "Unknown format";
-                return false;
-            }
-
+            QByteArray payload = receivedData.mid(4, endIndex - 4);
+            *response = QString::fromUtf8(payload);
             return true;
+        }
+
+        /* ===== BINARY MODE ===== */
+        else if(format == 'B')
+        {
+            /* need at least header + size */
+            if(receivedData.size() < 6)
+                continue;
+
+            uint16_t payloadSize = ((uint8_t)receivedData[4] << 8) | (uint8_t)receivedData[5];
+
+            int totalSize = 4 + 2 + payloadSize + 2; // OK B + size + payload + CRLF
+
+            if(receivedData.size() < totalSize)
+                continue;
+
+            QByteArray payload = receivedData.mid(6, payloadSize);
+
+            *response = payload.toHex().toUpper();
+            return true;
+        }
+
+        else
+        {
+            *response = "Unknown format";
+            return false;
         }
     }
 }

@@ -110,6 +110,7 @@ public slots:
 
 private slots:
     void    onDeviceWndCalibrationUpdated();
+    void    onDeviceWndCalibrationStoreRequest();
 
 
 

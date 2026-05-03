@@ -723,6 +723,229 @@ bool Device::getSamplingPeriod(QString *time)
     return true;
 }
 
+bool Device::getCalParam()
+{
+    float vref, voff, vcor,coff, ccor;
+    QString response;
+    QString command = "device param cal get";
+
+    if(!controlLink->executeCommand(command, &response, 1000))
+        return false;
+
+    QStringList tokens = response.split(" ", Qt::SkipEmptyParts);
+
+    QMap<QString, float*> paramMap;
+    paramMap["VREF"] = &vref;
+    paramMap["VOFF"] = &voff;
+    paramMap["VCOR"] = &vcor;
+    paramMap["COFF"] = &coff;
+    paramMap["CCOR"] = &ccor;
+
+    for(const QString &token : tokens)
+    {
+        QStringList pair = token.split("=");
+
+        if(pair.size() != 2)
+            continue;
+
+        QString key = pair[0].trimmed();
+        QString valueStr = pair[1].trimmed();
+
+        if(paramMap.contains(key))
+        {
+            bool ok;
+            float val = valueStr.toFloat(&ok);
+
+            if(!ok)
+                return false;
+
+            *(paramMap[key]) = val;
+        }
+    }
+
+    // Provera da li su svi parametri popunjeni (opciono ali preporučeno)
+
+    dataProcessing->setCalibrationData(vref, voff, vcor, coff, ccor);
+    m_params->setParamValue("adcVRef", QString::number(vref));
+    m_params->setParamValue("adcVOff", QString::number(voff));
+    m_params->setParamValue("adcVCor", QString::number(vcor));
+    m_params->setParamValue("adcVCOffset", QString::number(coff));
+    m_params->setParamValue("adcCCor", QString::number(ccor));
+    emit sigCalParamObtained(vref, voff, vcor, coff, ccor);
+    return true;
+}
+
+bool Device::setCalParam()
+{
+    QString response;
+    float vref = dataProcessing->getCalibrationData()->adcVoltageRef;
+    float voff = dataProcessing->getCalibrationData()->voltageOff;
+    float vcor = dataProcessing->getCalibrationData()->voltageCorr;
+    float coff = dataProcessing->getCalibrationData()->voltageCurrOffset;
+    float ccor = dataProcessing->getCalibrationData()->currentCorrection;
+
+    QString command = QString("device param cal set -vref=%1 -voff=%2 -vcor=%3 -coff=%4 -ccor=%5")
+            .arg(vref, 0, 'f', 3)
+            .arg(voff, 0, 'f', 3)
+            .arg(vcor, 0, 'f', 3)
+            .arg(coff, 0, 'f', 3)
+            .arg(ccor, 0, 'f', 3);
+
+    if(!controlLink->executeCommand(command, &response, 1000))
+        return false;
+
+    if(response.trimmed() != "OK")
+        return false;
+
+    m_params->setParamValue("adcVRef", QString::number(vref));
+    m_params->setParamValue("adcVOff", QString::number(voff));
+    m_params->setParamValue("adcVCor", QString::number(vcor));
+    m_params->setParamValue("adcVCOffset", QString::number(coff));
+    m_params->setParamValue("adcCCor", QString::number(ccor));
+    return true;
+}
+bool Device::getShuntParam()
+{
+    float shunt = 0.0f;
+
+    QString response;
+    QString command = "device param shunt get";
+
+    if(!controlLink->executeCommand(command, &response, 1000))
+        return false;
+
+    // Očekivano: "SHUNT=0.045"
+    QStringList tokens = response.split(" ", Qt::SkipEmptyParts);
+
+    for(const QString &token : tokens)
+    {
+        QStringList pair = token.split("=");
+
+        if(pair.size() != 2)
+            continue;
+
+        QString key = pair[0].trimmed();
+        QString valueStr = pair[1].trimmed();
+
+        if(key == "SHUNT")
+        {
+            bool ok;
+            shunt = valueStr.toFloat(&ok);
+
+            if(!ok)
+                return false;
+
+            dataProcessing->setShunt(shunt);
+            m_params->setParamValue("shuntValue", QString::number(shunt));
+            emit sigShuntParamObtained(shunt);
+            return true;
+        }
+    }
+
+    return false;
+}
+bool Device::getGainParam()
+{
+    float gain = 0.0f;
+
+    QString response;
+    QString command = "device param gain get";
+
+    if(!controlLink->executeCommand(command, &response, 1000))
+        return false;
+
+    // Očekivano: "GAIN=10.0"
+    QStringList tokens = response.split(" ", Qt::SkipEmptyParts);
+
+    for(const QString &token : tokens)
+    {
+        QStringList pair = token.split("=");
+
+        if(pair.size() != 2)
+            continue;
+
+        QString key = pair[0].trimmed();
+        QString valueStr = pair[1].trimmed();
+
+        if(key == "GAIN")
+        {
+            bool ok;
+            gain = valueStr.toFloat(&ok);
+
+            if(!ok)
+                return false;
+
+            dataProcessing->setGain(gain);
+            m_params->setParamValue("gainValue", QString::number(gain));
+            emit sigGainParamObtained(gain);
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+bool Device::getMAC()
+{
+    QString response;
+    QString command = "device ipinfo mac get";
+
+    if(!controlLink->executeCommand(command, &response, 1000))
+        return false;
+
+    QString value = response.trimmed();
+
+    if(value.isEmpty())
+        return false;
+
+    m_params->setParamValue("deviceMac", value);
+    emit sigMACObtained(value);
+
+    return true;
+}
+
+bool Device::getHWSerial()
+{
+    QString response;
+    QString command = "device hwserial get";
+
+    if(!controlLink->executeCommand(command, &response, 1000))
+        return false;
+
+    QString value = response.trimmed();
+
+    if(value.isEmpty())
+        return false;
+
+
+    m_params->setParamValue("deviceSerial", value);
+    emit sigHWSerialObtained(value);
+
+    return true;
+}
+
+bool Device::getSWSerial()
+{
+    QString response;
+    QString command = "device swserial get";
+
+    if(!controlLink->executeCommand(command, &response, 1000))
+        return false;
+
+    QString value = response.trimmed();
+
+    if(value.isEmpty())
+        return false;
+
+    m_params->setParamValue("fwVersion", value);
+    emit sigSWSerialObtained(value);
+
+    return true;
+}
+
+
+
 bool Device::setVOffset(QString off)
 {
     QString response;
@@ -1031,6 +1254,9 @@ double Device::obtainSamplingTime()
 bool Device::acquireDeviceConfiguration(device_adc_t aAdc)
 {
     adc = aAdc;
+    getMAC();
+    getHWSerial();
+    getSWSerial();
     getSamplingPeriod();
     getLoadStatus();
     getLoadCurrent();
@@ -1046,6 +1272,9 @@ bool Device::acquireDeviceConfiguration(device_adc_t aAdc)
     getChargerCurrent();
     getChargerTermCurrent();
     getChargerTermVoltage();
+    getCalParam();
+    getShuntParam();
+    getGainParam();
     if(adc == DEVICE_ADC_INTERNAL)
     {
         getResolution();

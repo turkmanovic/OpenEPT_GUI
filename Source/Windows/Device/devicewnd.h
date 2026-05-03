@@ -190,6 +190,7 @@ signals:
     void            sigBDFormat();
 
     void            sigCalibrationUpdated();
+    void            sigCalibrationStoreRequest();
     void            sigDeviceConfigSet(QMap<QString, QString> changedFields);
 protected:
     void            closeEvent(QCloseEvent *event);
@@ -235,6 +236,7 @@ public slots:
     void            onAdvanceConfigurationButtonPressed(bool pressed);
 
     void            onCalibrationButtonPressed(bool pressed);
+
     void            onEnenergyControlButtonPressed(bool pressed);
 
 
@@ -244,6 +246,7 @@ public slots:
 
 private slots:
     void            onCalibrationUpdated();
+    void            onCalibrationStoreRequest();
 
 private:
     Ui::DeviceWnd               *ui;

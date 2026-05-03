@@ -75,6 +75,9 @@ public:
     dataprocessing_acquisition_status_t getAcquisitionStatus();
 
     CalibrationData*                    getCalibrationData();
+    bool                                setCalibrationData(float vref, float voff, float vcor, float coff, float ccor);
+    bool                                setShunt(float shunt);
+    bool                                setGain(float gain);
 
     void                                calibrationDataUpdated();
 

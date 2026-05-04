@@ -192,11 +192,17 @@ signals:
     void            sigCalibrationUpdated();
     void            sigCalibrationStoreRequest();
     void            sigDeviceConfigSet(QMap<QString, QString> changedFields);
+    void            sigDeviceConfigGet();
+    void            sigDeviceConfigStore();
+    void            sigDeviceReset();
 protected:
     void            closeEvent(QCloseEvent *event);
 
 public slots:
     void            onDeviceConfigSet(QMap<QString, QString> changedFields);
+    void            onDeviceConfigGet();
+    void            onDeviceConfigStore();
+    void            onDeviceReset();
     void            onSaveToFileChanged(int value);
     void            onStartAcquisition();
     void            onPauseAcquisition();

@@ -138,11 +138,12 @@ void ConfigurationWnd::setBDContent(const QString &content)
     if(bdContentTextEdit == nullptr)
         return;
 
+    QByteArray data = QByteArray::fromHex(content.toUtf8());
+    QByteArray prev = m_prevBDData;
+
     QString formatted;
     int bytesPerLine = 16;
-
-    /* content je HEX string: 2 char = 1 byte */
-    int totalBytes = content.size() / 2;
+    int totalBytes = data.size();
 
     for(int i = 0; i < totalBytes; i++)
     {
@@ -153,16 +154,45 @@ void ConfigurationWnd::setBDContent(const QString &content)
                          .toUpper();
         }
 
-        QString byte = content.mid(i * 2, 2).toUpper();
-        formatted += byte + " ";
+        uint8_t byte = (uint8_t)data[i];
 
-        if((i + 1) % bytesPerLine == 0)
+        QString hex = QString("%1").arg(byte, 2, 16, QChar('0')).toUpper();
+
+        bool changed = (i < prev.size()) && (byte != (uint8_t)prev[i]);
+
+        if(changed)
+            formatted += "<span style=\"color:red;font-weight:bold;\">" + hex + "</span> ";
+        else
+            formatted += hex + " ";
+
+        /* ASCII */
+        if((i % bytesPerLine) == bytesPerLine - 1 || i == totalBytes - 1)
         {
-            formatted += "\n";
+            int lineStart = i - (i % bytesPerLine);
+            int lineEnd = i;
+
+            QString ascii = " |";
+
+            for(int j = lineStart; j <= lineEnd; j++)
+            {
+                uint8_t c = (uint8_t)data[j];
+
+                if(c >= 32 && c <= 126)
+                    ascii += QChar(c);
+                else
+                    ascii += '.';
+            }
+
+            ascii += "|";
+
+            formatted += ascii;
+            formatted += "<br>";
         }
     }
 
-    bdContentTextEdit->setPlainText(formatted);
+    bdContentTextEdit->setHtml("<pre style='font-family:Courier New;'>" + formatted + "</pre>");
+
+    m_prevBDData = data;
 }
 
 void ConfigurationWnd::rebuildUi()
@@ -424,23 +454,41 @@ QHBoxLayout *ConfigurationWnd::createButtonsRow()
     setConfigButton = new QPushButton("Set", this);
     setConfigButton->setFixedSize(80, CONFIG_BUTTON_HEIGHT);
 
+    storeConfigButton = new QPushButton("Store", this);
+    storeConfigButton->setFixedSize(80, CONFIG_BUTTON_HEIGHT);
+
     acquireConfigButton = new QPushButton("Get", this);
     acquireConfigButton->setFixedSize(80, CONFIG_BUTTON_HEIGHT);
+
+    resetDeviceButton = new QPushButton("Reset", this);
+    resetDeviceButton->setFixedSize(80, CONFIG_BUTTON_HEIGHT);
 
     buttonsLayout->addWidget(configurationStatusLabel);
     buttonsLayout->addStretch();
     buttonsLayout->addWidget(setConfigButton);
+    buttonsLayout->addWidget(storeConfigButton);
     buttonsLayout->addWidget(acquireConfigButton);
+    buttonsLayout->addWidget(resetDeviceButton);
 
     connect(setConfigButton,
             &QPushButton::clicked,
             this,
             &ConfigurationWnd::onSetConfigClicked);
 
+    connect(storeConfigButton,
+            &QPushButton::clicked,
+            this,
+            &ConfigurationWnd::onStoreConfigClicked);
+
     connect(acquireConfigButton,
             &QPushButton::clicked,
             this,
             &ConfigurationWnd::onAcquireConfigClicked);
+
+    connect(resetDeviceButton,
+            &QPushButton::clicked,
+            this,
+            &ConfigurationWnd::onResetDevice);
 
     return buttonsLayout;
 }
@@ -697,6 +745,63 @@ void ConfigurationWnd::onBDFormatClicked()
     emit sigBDFormatRequest();
 }
 
+void ConfigurationWnd::onBDExportClicked()
+{
+    QString filePath = QFileDialog::getSaveFileName(
+                this,
+                "Save memory content",
+                "",
+                "Binary (*.bin);;All Files (*)");
+
+    if(filePath.isEmpty())
+        return;
+
+    QString text = bdContentTextEdit->toPlainText();
+
+    QString clean;
+    QStringList lines = text.split("\n", Qt::SkipEmptyParts);
+
+    for(const QString& line : lines)
+    {
+        int colonIndex = line.indexOf(":");
+        int asciiIndex = line.indexOf("|");
+
+        if(colonIndex != -1)
+        {
+            QString dataPart;
+
+            if(asciiIndex != -1)
+                dataPart = line.mid(colonIndex + 1, asciiIndex - colonIndex - 1);
+            else
+                dataPart = line.mid(colonIndex + 1);
+
+            clean += dataPart;
+        }
+    }
+
+    /* ukloni sve osim HEX */
+    clean.remove(QRegularExpression("[^0-9A-Fa-f]"));
+
+    /* ukloni whitespace */
+    clean.remove(' ');
+    clean.remove('\r');
+    clean.remove('\n');
+
+    /* ===== CONVERT HEX → BINARY ===== */
+    QByteArray data = QByteArray::fromHex(clean.toUtf8());
+
+    if(data.isEmpty())
+        return;
+
+    QFile file(filePath);
+
+    if(!file.open(QIODevice::WriteOnly))
+        return;
+
+    file.write(data);
+    file.close();
+}
+
 void ConfigurationWnd::setBDProgress(int percent, const QString &text)
 {
     if(bdProgressBar == nullptr || bdProgressLabel == nullptr)
@@ -770,9 +875,16 @@ QWidget* ConfigurationWnd::createBDMemoryWidget()
     bdFormatButton->setIconSize(QSize(24, 24));
     bdFormatButton->setToolTip("Format memory");
 
+    bdExportButton = new QPushButton(this);
+    bdExportButton->setFixedSize(CONFIG_BUTTON_WIDTH, CONFIG_BUTTON_HEIGHT);
+    bdExportButton->setIcon(QIcon(":/images/NewSet/export.png"));
+    bdExportButton->setIconSize(QSize(24, 24));
+    bdExportButton->setToolTip("Export memory to PC");
+
     bdGetButton->setStyleSheet(btnStyle);
     bdUpdateButton->setStyleSheet(btnStyle);
     bdFormatButton->setStyleSheet(btnStyle);
+    bdExportButton->setStyleSheet(btnStyle);
 
     headerLayout->addWidget(title);
     headerLayout->addStretch();
@@ -809,6 +921,7 @@ QWidget* ConfigurationWnd::createBDMemoryWidget()
     headerLayout->addWidget(bdGetButton);
     headerLayout->addWidget(bdUpdateButton);
     headerLayout->addWidget(bdFormatButton);
+    headerLayout->addWidget(bdExportButton);
 
 
     layout->addLayout(headerLayout);
@@ -840,6 +953,11 @@ QWidget* ConfigurationWnd::createBDMemoryWidget()
             &QPushButton::clicked,
             this,
             &ConfigurationWnd::onBDFormatClicked);
+
+    connect(bdExportButton,
+            &QPushButton::clicked,
+            this,
+            &ConfigurationWnd::onBDExportClicked);
 
     return container;
 }
@@ -900,4 +1018,14 @@ void ConfigurationWnd::onAcquireConfigClicked()
     }
 
     emit sigDeviceConfigAcquireRequest();
+}
+
+void ConfigurationWnd::onStoreConfigClicked()
+{
+    emit sigDeviceConfigStore();
+}
+
+void ConfigurationWnd::onResetDevice()
+{
+    emit sigResetDevice();
 }

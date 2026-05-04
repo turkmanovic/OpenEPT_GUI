@@ -45,5 +45,6 @@
         <file>images/NewSet/download.png</file>
         <file>images/NewSet/upload.png</file>
         <file>images/NewSet/format.png</file>
+        <file>images/NewSet/export.png</file>
     </qresource>
 </RCC>

@@ -1,7 +1,12 @@
 #include <QMessageBox>
+#include <devicecontainer.h>
 #include "devicecontainer.h"
 
-DeviceContainer::DeviceContainer(QObject *parent,  DeviceWnd* aDeviceWnd, Device* aDevice, ApplicationParameters* appParam)
+DeviceContainer::DeviceContainer(QObject *parent,
+                                 DeviceWnd* aDeviceWnd,
+                                 Device* aDevice,
+                                 ApplicationParameters* appParam,
+                                 QDockWidget* dock)
     : QObject{parent}
 {
     deviceWnd       = aDeviceWnd;
@@ -15,6 +20,7 @@ DeviceContainer::DeviceContainer(QObject *parent,  DeviceWnd* aDeviceWnd, Device
     consumptionProfileNameExists = false;
     globalSaveToFileEnabled   = false;
     epEnabled           = false;
+    m_dock              = dock;
 
     elapsedTime     = 0;
     timer           = new QTimer();
@@ -128,7 +134,21 @@ DeviceContainer::DeviceContainer(QObject *parent,  DeviceWnd* aDeviceWnd, Device
     connect(deviceWnd,
             &DeviceWnd::sigDeviceConfigSet,
             this,
-            &DeviceContainer::onDeviceConfigUpdated);
+            &DeviceContainer::onDeviceConfigUpdate);
+
+    connect(deviceWnd,
+            &DeviceWnd::sigDeviceConfigGet,
+            this,
+            &DeviceContainer::onDeviceConfigGet);
+    connect(deviceWnd,
+            &DeviceWnd::sigDeviceConfigStore,
+            this,
+            &DeviceContainer::onDeviceConfigStore);
+
+    connect(deviceWnd,
+            &DeviceWnd::sigDeviceReset,
+            this,
+            &DeviceContainer::onDeviceReset);
 
 }
 void DeviceContainer::fillDeviceSetFunctions()
@@ -265,9 +285,46 @@ void DeviceContainer::fillDeviceSetFunctions()
 }
 DeviceContainer::~DeviceContainer()
 {
-    delete deviceWnd;
-    delete device;
-    delete log;
+    if(timer)
+        timer->stop();
+
+    /* 🔥 OVO JE KLJUČ */
+    if(m_dock)
+    {
+        m_dock->close();
+        m_dock->deleteLater();
+        m_dock = nullptr;
+    }
+
+    if(device)
+    {
+        device->deleteLater();
+        device = nullptr;
+    }
+
+    if(deviceWnd)
+    {
+        deviceWnd->deleteLater();
+        deviceWnd = nullptr;
+    }
+}
+
+bool DeviceContainer::getDeviceName(QString *name)
+{
+    QString deviceName;
+    device->getName(&deviceName);
+    *name = deviceName;
+    return true;
+}
+
+Device *DeviceContainer::getDevice()
+{
+    return device;
+}
+
+DeviceWnd *DeviceContainer::getDeviceWnd()
+{
+    return deviceWnd;
 }
 
 void DeviceContainer::onDeviceControlLinkDisconnected()
@@ -294,7 +351,7 @@ void DeviceContainer::onDeviceStatusLinkNewMessageReceived(QString aDeviceIP, QS
 
 void DeviceContainer::onDeviceWndClosed()
 {
-    emit sigDeviceClosed(device);
+    emit sigDeviceClosed(this);
 }
 
 void DeviceContainer::onDeviceWndSaveToFileChanged(bool saveToFile)
@@ -578,7 +635,7 @@ void DeviceContainer::onDeviceSamplingPeriodObtained(QString stime)
               "Sampling time successfully obtained and presented",
               "Unable to present sampling time");
 }
-void DeviceContainer::onDeviceConfigUpdated(QMap<QString, QString> changedFields)
+void DeviceContainer::onDeviceConfigUpdate(QMap<QString, QString> changedFields)
 {
     auto params = device->parameters();
     bool status = true;
@@ -606,6 +663,36 @@ void DeviceContainer::onDeviceConfigUpdated(QMap<QString, QString> changedFields
         }
     }
     deviceWnd->setConfigurationAppliedStatus(status);
+}
+
+void DeviceContainer::onDeviceConfigGet()
+{
+    device->acquireDeviceConfiguration();
+    deviceWnd->setConfigurationAppliedStatus(true);
+}
+
+void DeviceContainer::onDeviceConfigStore()
+{
+    bool ok = device->storeParam();
+
+    logResult(ok,
+              "Parameter stored to FS",
+              "Unable to store parameters");
+
+}
+
+void DeviceContainer::onDeviceReset()
+{
+    bool ok = device->reset();
+
+    log->printLogMessage("Reset device ...", LOG_MESSAGE_TYPE_WARNING);
+
+    if(timer)
+        timer->stop();
+
+    emit sigDeviceClosed(this);   // 🔥 SAMO OVO
+
+    return;
 }
 
 void DeviceContainer::onDeviceBDChunkRead(float percentage)
@@ -845,7 +932,8 @@ void DeviceContainer::onDeviceWndCalibrationUpdated()
 void DeviceContainer::onDeviceWndCalibrationStoreRequest()
 {
     bool ok = device->setCalParam();
-    logResult(ok,
+    bool ok2 = device->storeParam();
+    logResult(ok && ok2,
               "Calibration parameters sucesfully updated and stored on device",
               "Unable to update calibration parameters");
 }

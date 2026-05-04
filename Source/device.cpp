@@ -804,6 +804,22 @@ bool Device::setCalParam()
     m_params->setParamValue("adcCCor", QString::number(ccor));
     return true;
 }
+
+bool Device::storeParam()
+{
+    QString response;
+    QString command = "device param store";
+    if(!controlLink->executeCommand(command, &response, 1000)) return false;
+    return true;
+}
+
+bool Device::reset()
+{
+    QString response;
+    QString command = "device reset";
+    if(!controlLink->executeCommand(command, &response, 1000)) return false;
+    return true;
+}
 bool Device::getShuntParam()
 {
     float shunt = 0.0f;

@@ -117,6 +117,8 @@ public:
 
     bool        getCalParam();
     bool        setCalParam();
+    bool        storeParam();
+    bool        reset();
 
     bool        getGainParam();
     bool        getShuntParam();

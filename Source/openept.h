@@ -27,7 +27,7 @@ public:
 private slots:
     void onActionAddSingleDeviceTriggered();
     void onAddDeviceWndAddDevice(QString aIpAddress, QString aPort);
-    void onDeviceContainerDeviceWndClosed(Device* aDevice);
+    void onDeviceContainerDeviceWndClosed(DeviceContainer* container);
     void onDeviceContainerAllDeviceWndClosed();
     void onActionOpenAndProcessData();
     void onActionAppSettings();

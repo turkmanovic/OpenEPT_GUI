@@ -132,17 +132,19 @@ bool OpenEPT::addNewDevice(QString aIpAddress, QString aPort)
     tmpdeviceWnd->setParameters(tmpDevice->parameters());
     //tmpdeviceWnd->setWorkingSpaceDir(workspacePath);
 
-    /* Create device container */
-    DeviceContainer *tmpDeviceContainer = new DeviceContainer(NULL,tmpdeviceWnd,tmpDevice, m_AppParam);
 
-    connect(tmpDeviceContainer, SIGNAL(sigDeviceClosed(Device*)), this, SLOT(onDeviceContainerDeviceWndClosed(Device*)));
+    // Add the child window to the MDI area
+    QDockWidget *dock = new QDockWidget(deviceName, this);
+
+    /* Create device container */
+    DeviceContainer *tmpDeviceContainer = new DeviceContainer(NULL,tmpdeviceWnd,tmpDevice, m_AppParam, dock);
+
+    connect(tmpDeviceContainer, SIGNAL(sigDeviceClosed(DeviceContainer*)), this, SLOT(onDeviceContainerDeviceWndClosed(DeviceContainer*)));
 
     /* Add device to menu bar */
     QAction* tmpDeviceAction = new QAction(deviceName);
     connectedDevicesMenu->addAction(tmpDeviceAction);
 
-    // Add the child window to the MDI area
-    QDockWidget *dock = new QDockWidget(deviceName, this);
     dock->setObjectName("DeviceDock_" + QString::number(connectedDeviceNumber));
 
     dock->setWidget(tmpdeviceWnd);
@@ -181,22 +183,34 @@ void OpenEPT::setTheme()
     //setStyleSheet("color:white;background-color:#404241;border-color:#404241");
 }
 
-void OpenEPT::onDeviceContainerDeviceWndClosed(Device *aDevice)
+void OpenEPT::onDeviceContainerDeviceWndClosed(DeviceContainer *container)
 {
+    Device* device = container->getDevice();
+
     QString name;
-    aDevice->getName(&name);
+    device->getName(&name);
+
     QList<QAction*> actionList = connectedDevicesMenu->actions();
+
     for(int i = 0; i < actionList.size(); i++)
     {
         if(actionList[i]->text() == name)
         {
             connectedDevicesMenu->removeAction(actionList[i]);
             deviceList.removeAt(i);
-            delete aDevice;
-            return;
+            break;
         }
     }
 
+
+    /* ===== CLOSE UI ===== */
+//    if(container->getDeviceWnd())
+//    {
+//        container->getDeviceWnd()->close();
+//    }
+
+    /* ===== DELETE CONTAINER (cascade) ===== */
+    delete container;
 }
 
 void OpenEPT::onDeviceContainerAllDeviceWndClosed()

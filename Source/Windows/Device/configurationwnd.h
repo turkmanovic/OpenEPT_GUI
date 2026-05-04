@@ -48,8 +48,10 @@ public:
 
 signals:
     void sigDeviceConfigSet(QMap<QString, QString> changedFields);
+    void sigDeviceConfigStore();
     void sigApplicationConfigSet(QMap<QString, QString> changedFields);
     void sigConfigSet(QMap<QString, QString> changedFields);
+    void sigResetDevice();
 
     void sigDeviceConfigAcquireRequest();
 
@@ -63,10 +65,13 @@ private slots:
     void onParamChanged(QString key, QString value);
     void onSetConfigClicked();
     void onAcquireConfigClicked();
+    void onStoreConfigClicked();
+    void onResetDevice();
 
     void onBDGetClicked();
     void onBDUpdateClicked();
     void onBDFormatClicked();
+    void onBDExportClicked();
 
 private:
     Ui::ConfigurationWnd *ui;
@@ -79,7 +84,9 @@ private:
     QLabel *changedFieldsLabel;
 
     QPushButton *setConfigButton;
+    QPushButton *storeConfigButton;
     QPushButton *acquireConfigButton;
+    QPushButton *resetDeviceButton;
 
     QMap<QString, QLineEdit*> fields;
     QMap<QString, QString> appliedValues;
@@ -120,9 +127,11 @@ private:
     QPushButton *bdGetButton;
     QPushButton *bdUpdateButton;
     QPushButton *bdFormatButton;
+    QPushButton *bdExportButton;
     QProgressBar *bdProgressBar;
     QLabel *bdProgressLabel;
     QWidget* createBDMemoryWidget();
+    QByteArray m_prevBDData;
 };
 
 #endif // CONFIGURATIONWND_H

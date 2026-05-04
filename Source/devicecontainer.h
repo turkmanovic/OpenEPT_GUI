@@ -16,11 +16,18 @@ class DeviceContainer : public QObject
 {
     Q_OBJECT
 public:
-    explicit DeviceContainer(QObject *parent = nullptr,  DeviceWnd* aDeviceWnd = nullptr, Device* aDevice = nullptr, ApplicationParameters* appParam=nullptr);
+    explicit DeviceContainer(QObject *parent = nullptr,
+                             DeviceWnd* aDeviceWnd = nullptr,
+                             Device* aDevice = nullptr,
+                             ApplicationParameters* appParam=nullptr,
+                             QDockWidget* dock=nullptr);
     ~DeviceContainer();
 
+    bool getDeviceName(QString* name);
+    Device* getDevice();
+    DeviceWnd* getDeviceWnd();
 signals:
-    void    sigDeviceClosed(Device* device);
+    void    sigDeviceClosed(DeviceContainer* container);
 
 public slots:
     void    onConsoleWndMessageRcvd(QString msg);
@@ -80,7 +87,10 @@ public slots:
     void    onDeviceOCurrentValueObtained(int value);
     void    onDeviceBDSizeObtained(int value);
 
-    void    onDeviceConfigUpdated(QMap<QString, QString> changedFields);
+    void    onDeviceConfigUpdate(QMap<QString, QString> changedFields);
+    void    onDeviceConfigGet();
+    void    onDeviceConfigStore();
+    void    onDeviceReset();
 
     void    onDeviceBDChunkRead(float percentage);
     void    onDeviceBDChunkWrite(float percentage);
@@ -140,6 +150,8 @@ private:
     ChargingState                   chargingState;
 
     ApplicationParameters           *m_AppParamsRef;
+
+    QDockWidget*                    m_dock;
 
 
     QMap<QString, std::function<void(const QString&)>> deviceSetHandlers;

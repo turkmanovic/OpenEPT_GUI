@@ -407,6 +407,9 @@ void DeviceWnd::setDeviceStateConnected()
 }
 void    DeviceWnd::closeEvent(QCloseEvent *event)
 {
+    configurationWnd->close();
+    consoleWnd->close();
+    energyControlWnd->close();
     emit sigWndClosed();
 }
 
@@ -414,6 +417,22 @@ void DeviceWnd::onDeviceConfigSet(QMap<QString, QString> changedFields)
 {
     emit sigDeviceConfigSet(changedFields);
 }
+
+void DeviceWnd::onDeviceConfigGet()
+{
+    emit sigDeviceConfigGet();
+}
+
+void DeviceWnd::onDeviceConfigStore()
+{
+    emit sigDeviceConfigStore();
+}
+
+void DeviceWnd::onDeviceReset()
+{
+    emit sigDeviceReset();
+}
+
 
 DeviceWnd::~DeviceWnd()
 {
@@ -438,6 +457,21 @@ void DeviceWnd::setParameters(DeviceParameters *params)
             &DeviceWnd::onDeviceConfigSet);
 
     connect(configurationWnd,
+            &ConfigurationWnd::sigDeviceConfigAcquireRequest,
+            this,
+            &DeviceWnd::onDeviceConfigGet);
+
+    connect(configurationWnd,
+            &ConfigurationWnd::sigResetDevice,
+            this,
+            &DeviceWnd::onDeviceReset);
+
+    connect(configurationWnd,
+            &ConfigurationWnd::sigDeviceConfigStore,
+            this,
+            &DeviceWnd::onDeviceConfigStore);
+
+    connect(configurationWnd,
             &ConfigurationWnd::sigBDContentGetRequest,
             this,
             &DeviceWnd::onConfWndGetBDContent);
@@ -451,6 +485,12 @@ void DeviceWnd::setParameters(DeviceParameters *params)
             &ConfigurationWnd::sigBDFormatRequest,
             this,
             &DeviceWnd::onConfWndBDFormat);
+
+
+    connect(this, &QObject::destroyed,
+            configurationWnd, &QObject::deleteLater);
+
+
 }
 
 void DeviceWnd::setDeviceNetworkState(device_state_t aDeviceState)

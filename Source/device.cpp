@@ -1187,7 +1187,7 @@ bool Device::setBDFContent(QByteArray *content)
     if(totalBytes == 0)
         return false;
 
-    const int chunkBytes = 128;
+    const int chunkBytes = 256;
     int i = 1;
 
     for(int offset = 0; offset < totalBytes; offset += chunkBytes)

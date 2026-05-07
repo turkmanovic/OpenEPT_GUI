@@ -139,6 +139,7 @@ void ConfigurationWnd::setBDContent(const QString &content)
         return;
 
     QByteArray data = QByteArray::fromHex(content.toUtf8());
+    m_currentBDData = data;
     QByteArray prev = m_prevBDData;
 
     QString formatted;
@@ -756,50 +757,21 @@ void ConfigurationWnd::onBDExportClicked()
     if(filePath.isEmpty())
         return;
 
-    QString text = bdContentTextEdit->toPlainText();
-
-    QString clean;
-    QStringList lines = text.split("\n", Qt::SkipEmptyParts);
-
-    for(const QString& line : lines)
+    if(m_currentBDData.isEmpty())
     {
-        int colonIndex = line.indexOf(":");
-        int asciiIndex = line.indexOf("|");
-
-        if(colonIndex != -1)
-        {
-            QString dataPart;
-
-            if(asciiIndex != -1)
-                dataPart = line.mid(colonIndex + 1, asciiIndex - colonIndex - 1);
-            else
-                dataPart = line.mid(colonIndex + 1);
-
-            clean += dataPart;
-        }
-    }
-
-    /* ukloni sve osim HEX */
-    clean.remove(QRegularExpression("[^0-9A-Fa-f]"));
-
-    /* ukloni whitespace */
-    clean.remove(' ');
-    clean.remove('\r');
-    clean.remove('\n');
-
-    /* ===== CONVERT HEX → BINARY ===== */
-    QByteArray data = QByteArray::fromHex(clean.toUtf8());
-
-    if(data.isEmpty())
+        qDebug() << "No data available!";
         return;
+    }
 
     QFile file(filePath);
 
     if(!file.open(QIODevice::WriteOnly))
         return;
 
-    file.write(data);
+    file.write(m_currentBDData);
     file.close();
+
+    qDebug() << "Saved bytes:" << m_currentBDData.size();
 }
 
 void ConfigurationWnd::setBDProgress(int percent, const QString &text)

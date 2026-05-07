@@ -131,6 +131,7 @@ private:
     QProgressBar *bdProgressBar;
     QLabel *bdProgressLabel;
     QWidget* createBDMemoryWidget();
+    QByteArray m_currentBDData;
     QByteArray m_prevBDData;
 };
 

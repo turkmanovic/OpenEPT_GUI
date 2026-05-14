@@ -1278,6 +1278,7 @@ bool Device::acquireDeviceConfiguration(device_adc_t aAdc)
     getLoadCurrent();
     getBatStatus();
     getPPathStatus();
+    getChargerConnectionStatus();
     getUVoltageStatus();
     getUVoltageValue();
     getOVoltageStatus();
@@ -1333,6 +1334,26 @@ CalibrationData *Device::getCalibrationData()
 void Device::calibrationUpdated()
 {
     dataProcessing->calibrationDataUpdated();
+}
+
+bool Device::getChargerConnectionStatus(bool *status)
+{
+    QString response;
+    QString command = "charger connection status get";
+
+    if(!controlLink->executeCommand(command, &response, 10000))
+        return false;
+
+    chargerConnectionStatus = response.toDouble();
+
+    if(status != NULL)
+    {
+        *status = chargerConnectionStatus;
+    }
+
+    emit sigChargerConnectionStatusObtained(chargerConnectionStatus);
+
+    return true;
 }
 
 bool Device::setPPathStatus(bool status)
@@ -1714,6 +1735,14 @@ void Device::onStatusLinkNewMessageReceived(QString aDeviceIP, QString aMessage)
             else if (content.compare("charger charging done", Qt::CaseInsensitive) == 0)
             {
                 emit sigChargingDone();
+            }
+            else if(content.compare("charger connection connected", Qt::CaseInsensitive) == 0)
+            {
+                emit sigChargerConnectionStatusObtained(true);
+            }
+            else if(content.compare("charger connection disconnected", Qt::CaseInsensitive) == 0)
+            {
+                emit sigChargerConnectionStatusObtained(false);
             }
         }
         else

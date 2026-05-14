@@ -648,6 +648,11 @@ bool DeviceWnd::setSaveToFileState(bool state)
     return true;
 }
 
+void DeviceWnd::setChargerConnectionStatus(bool status)
+{
+    energyControlWnd->chargerConnectionStatusSet(status);
+}
+
 void DeviceWnd::setLoadCurrentStatus(bool state)
 {
     energyControlWnd->loadCurrentStatusSet(state);

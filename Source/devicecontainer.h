@@ -80,6 +80,7 @@ public slots:
     void    onDeviceChargerStateObtained(bool state);
     void    onDeviceDACStateObtained(bool state);
     void    onDeviceUVoltageObtained(bool state);
+    void    onDeviceChargerConnectionStatusOntained(bool state);
     void    onDeviceOVoltageObtained(bool state);
     void    onDeviceOCurrentObtained(bool state);
     void    onDeviceUVoltageValueObtained(float value);

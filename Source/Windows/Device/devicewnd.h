@@ -97,6 +97,8 @@ public:
     bool            setChargerState(bool state);
     bool            setSaveToFileState(bool state);
 
+    void            setChargerConnectionStatus(bool status);
+
     void            setLoadCurrentStatus(bool state);
     bool            setLoadCurrent(int current);
     void            setChargingCurrentStatus(bool state);

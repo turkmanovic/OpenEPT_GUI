@@ -78,6 +78,8 @@ DeviceContainer::DeviceContainer(QObject *parent,
     connect(device,     SIGNAL(sigOVoltageObtained(bool)),                          this,  SLOT(onDeviceOVoltageObtained(bool)));
     connect(device,     SIGNAL(sigUVoltageObtained(bool)),                          this,  SLOT(onDeviceUVoltageObtained(bool)));
     connect(device,     SIGNAL(sigOCurrentObtained(bool)),                          this,  SLOT(onDeviceOCurrentObtained(bool)));
+    connect(device,     SIGNAL(sigChargerConnectionStatusObtained(bool)),           this,  SLOT(onDeviceChargerConnectionStatusOntained(bool)));
+
     connect(device,     SIGNAL(sigChargerCurrentObtained(int )),                    this,  SLOT(onDeviceChargerCurrentObtained(int)));
     connect(device,     SIGNAL(sigChargerTermCurrentObtained(int )),                this,  SLOT(onDeviceChargerTermCurrentObtained(int)));
     connect(device,     SIGNAL(sigChargerTermVoltageObtained(float )),              this,  SLOT(onDeviceChargerTermVoltageObtained(float)));
@@ -1000,6 +1002,15 @@ void DeviceContainer::onDeviceUVoltageObtained(bool state)
     logResult(ok,
               "Under Voltage protection state successfully obtained and presented",
               "Unable to obtain Under Voltage protection state");
+}
+
+void DeviceContainer::onDeviceChargerConnectionStatusOntained(bool state)
+{
+    deviceWnd->setChargerConnectionStatus(state);
+
+    logResult(state,
+              "Charger connected",
+              "Charger disconnected");
 }
 
 void DeviceContainer::onDeviceOVoltageObtained(bool state)

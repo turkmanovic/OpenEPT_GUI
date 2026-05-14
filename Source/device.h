@@ -158,6 +158,8 @@ public:
     CalibrationData* getCalibrationData();
     void        calibrationUpdated();
 
+    bool        getChargerConnectionStatus(bool* status = NULL);
+
     bool        setPPathStatus(bool status);
     bool        getPPathStatus(bool* status = NULL);
     bool        setBatStatus(bool status);
@@ -209,6 +211,7 @@ signals:
     void        sigAdcInputClkObtained(QString inClk);
     void        sigCOffsetObtained(QString coffset);
     void        sigVOffsetObtained(QString voffset);
+    void        sigChargerConnectionStatusObtained(bool status);
     void        sigPPathStateObtained(bool  state);
     void        sigLoadStateObtained(bool  state);
     void        sigBatStateObtained(bool  state);
@@ -290,7 +293,7 @@ private:
     bool                            dacState;
     bool                            batState;
     bool                            chargerState;
-
+    bool                            chargerConnectionStatus;
     bool                            uvoltage;
     bool                            ovoltage;
     bool                            ocurrent;

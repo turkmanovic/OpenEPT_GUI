@@ -64,6 +64,9 @@ public slots:
     void    onDeviceWndGetBDContent();
     void    onDeviceWndSetBDContent(QByteArray content);
     void    onDeviceWndBDFormat();
+    void    onDeviceWndChargerGetBDContent();
+    void    onDeviceWndChargerSetBDContent(QByteArray content);
+    void    onDeviceWndChargerBDFormat();
 
 
     void    onDeviceControlLinkDisconnected();
@@ -101,6 +104,9 @@ public slots:
     void    onDeviceChargerCurrentObtained(int current);
     void    onDeviceChargerTermCurrentObtained(int current);
     void    onDeviceChargerTermVoltageObtained(float voltage);
+    void    onDeviceChargerMaxCurrentObtained(int current);
+    void    onDeviceChargerHWSerialObtained(QString serial);
+    void    onDeviceChargerFWVersionObtained(QString serial);
 
 
 

@@ -115,9 +115,15 @@ public:
     bool            setBDContent(QString content);
 
 
+    bool            setChargerBDContent(QString content);
+
+
     bool            setChargerCurrent(int current);
     bool            setChargerTermCurrent(int current);
     bool            setChargerTermVoltage(float voltage);
+    bool            setChargerMaxCurrent(int current);
+    bool            setChargerHWSerial(QString serial);
+    bool            setChargerFWSerial(QString serial);
     bool            chargingDone();
 
     bool            setChargingStatus(QString status);
@@ -129,6 +135,9 @@ public:
     void            setConfigurationAppliedStatus(bool status);
 
     void            setConfigurationBDProgressStatus(int percentage, QString status);
+
+
+    void            setConfigurationChargerBDProgressStatus(int percentage, QString status);
 
     bool            plotVoltageValues(QVector<double> values, QVector<double> keys);
     bool            plotCurrentValues(QVector<double> values, QVector<double> keys);
@@ -191,6 +200,10 @@ signals:
     void            sigSetBDContent(QByteArray content);
     void            sigBDFormat();
 
+    void            sigChargerReadFullBDContent();
+    void            sigChargerSetBDContent(QByteArray content);
+    void            sigChargerBDFormat();
+
     void            sigCalibrationUpdated();
     void            sigCalibrationStoreRequest();
     void            sigDeviceConfigSet(QMap<QString, QString> changedFields);
@@ -237,6 +250,10 @@ public slots:
     void            onConfWndGetBDContent();
     void            onConfWndSetBDContent(QByteArray content);
     void            onConfWndBDFormat();
+
+    void            onChargerConfWndGetBDContent();
+    void            onChargerConfWndSetBDContent(QByteArray content);
+    void            onChargerConfWndBDFormat();
 
 
     void            onConsumptionProfileNameChanged();

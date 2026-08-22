@@ -147,6 +147,10 @@ public:
     bool        BDFormat();
 
 
+    bool        getChargerBDContentFull(QString* content);
+    bool        setChargerBDContent(QByteArray* content);
+
+
     bool        getADCInputClk(QString* clk = NULL);
     double      obtainSamplingTime();    //This function determine time interval from start of until the acquisition end. Dont mix it with acquisiton (sampling) period
     bool        acquireDeviceConfiguration(device_adc_t aAdc = DEVICE_ADC_INTERNAL);
@@ -176,8 +180,12 @@ public:
     bool        getChargerCurrent(int* current= NULL);
     bool        setChargerTermCurrent(int current);
     bool        getChargerTermCurrent(int* current= NULL);
+    bool        setChargerMaxChargingCurrent(int current);
+    bool        getChargerMaxChargingCurrent(int* current= NULL);
     bool        setChargerTermVoltage(float voltage);
     bool        getChargerTermVoltage(float* voltage= NULL);
+    bool        getChargerHWSerial(QString* serial= NULL);
+    bool        getChargerFWVersion(QString* version= NULL);
     bool        latchTrigger();
     bool        getUVoltageStatus(bool* status = NULL);
     bool        getOVoltageStatus(bool* status = NULL);
@@ -231,7 +239,12 @@ signals:
 
     void        sigChargerCurrentObtained(int  current);
     void        sigChargerTermCurrentObtained(int  current);
+    void        sigChargerMaxChargingCurrentObtained(int  current);
     void        sigChargerTermVoltageObtained(float  voltage);
+
+
+    void        sigChargerHWSerialObtained(QString  serial);
+    void        sigChargerFWVersionObtained(QString  serial);
 
 
     void        sigAvgRatio(QString voffset);

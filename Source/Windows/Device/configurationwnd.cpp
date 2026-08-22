@@ -245,6 +245,25 @@ void ConfigurationWnd::clearUiState()
     setConfigButton = nullptr;
     acquireConfigButton = nullptr;
 
+    storeConfigButton = nullptr;
+    resetDeviceButton = nullptr;
+
+    bdContentTextEdit = nullptr;
+    bdGetButton = nullptr;
+    bdUpdateButton = nullptr;
+    bdFormatButton = nullptr;
+    bdExportButton = nullptr;
+    bdProgressBar = nullptr;
+    bdProgressLabel = nullptr;
+
+    chargerBDContentTextEdit = nullptr;
+    chargerBDGetButton = nullptr;
+    chargerBDUpdateButton = nullptr;
+    chargerBDFormatButton = nullptr;
+    chargerBDExportButton = nullptr;
+    chargerBDProgressBar = nullptr;
+    chargerBDProgressLabel = nullptr;
+
     QLayout *oldLayout = layout();
 
     if(oldLayout != nullptr)
@@ -316,10 +335,15 @@ QVBoxLayout *ConfigurationWnd::createGroupLayout(Params::GroupId group)
             }
         }
 
-        bool isFileStorage =
-            (subGroupMeta.id == static_cast<Params::SubGroupId>(DeviceParamDefs::FileStorage));
+        bool isDeviceBD =
+            (group == static_cast<Params::GroupId>(DeviceParamDefs::DeviceConfig) &&
+             subGroupMeta.id == static_cast<Params::SubGroupId>(DeviceParamDefs::FileStorage));
 
-        if(hasVisibleParam == false && isFileStorage == false)
+        bool isChargerBD =
+            (group == static_cast<Params::GroupId>(DeviceParamDefs::ChargerConfig) &&
+             subGroupMeta.id == static_cast<Params::SubGroupId>(DeviceParamDefs::ChargerBD));
+
+        if(hasVisibleParam == false && isDeviceBD == false && isChargerBD == false)
         {
             continue;
         }
@@ -337,8 +361,7 @@ QVBoxLayout *ConfigurationWnd::createGroupLayout(Params::GroupId group)
     return groupLayout;
 }
 
-QGroupBox *ConfigurationWnd::createSubGroupBox(Params::GroupId group,
-                                               Params::SubGroupId subGroup)
+QGroupBox *ConfigurationWnd::createSubGroupBox(Params::GroupId group, Params::SubGroupId subGroup)
 {
     if(m_params == nullptr)
     {
@@ -349,18 +372,21 @@ QGroupBox *ConfigurationWnd::createSubGroupBox(Params::GroupId group,
 
     QList<Params::Param> visibleParams;
 
-    bool isFileStorage =
-        (subGroup == static_cast<Params::SubGroupId>(DeviceParamDefs::FileStorage));
+    bool isDeviceBD = (group == static_cast<Params::GroupId>(DeviceParamDefs::DeviceConfig) &&
+                       subGroup == static_cast<Params::SubGroupId>(DeviceParamDefs::FileStorage));
+
+    bool isChargerBD = (group == static_cast<Params::GroupId>(DeviceParamDefs::ChargerConfig) &&
+                        subGroup == static_cast<Params::SubGroupId>(DeviceParamDefs::ChargerBD));
 
     for(const Params::Param &param : params)
     {
-        if(param.meta.visible == true )
+        if(param.meta.visible == true)
         {
             visibleParams.append(param);
         }
     }
 
-    if(visibleParams.isEmpty() == true )
+    if(visibleParams.isEmpty() == true && isDeviceBD == false && isChargerBD == false)
     {
         return nullptr;
     }
@@ -370,15 +396,29 @@ QGroupBox *ConfigurationWnd::createSubGroupBox(Params::GroupId group,
     QGroupBox *groupBox = new QGroupBox(subGroupMeta.name, this);
     groupBox->setToolTip(subGroupMeta.description);
 
-    if(group == static_cast<Params::GroupId>(DeviceParamDefs::DeviceConfig) &&
-       true == isFileStorage)
+    if(isDeviceBD == true)
     {
         QVBoxLayout *vLayout = new QVBoxLayout();
 
-
-        vLayout->addLayout(createParamsGrid(visibleParams));
+        if(visibleParams.isEmpty() == false)
+        {
+            vLayout->addLayout(createParamsGrid(visibleParams));
+        }
 
         vLayout->addWidget(createBDMemoryWidget());
+
+        groupBox->setLayout(vLayout);
+    }
+    else if(isChargerBD == true)
+    {
+        QVBoxLayout *vLayout = new QVBoxLayout();
+
+        if(visibleParams.isEmpty() == false)
+        {
+            vLayout->addLayout(createParamsGrid(visibleParams));
+        }
+
+        vLayout->addWidget(createChargerBDMemoryWidget());
 
         groupBox->setLayout(vLayout);
     }
@@ -774,6 +814,87 @@ void ConfigurationWnd::onBDExportClicked()
     qDebug() << "Saved bytes:" << m_currentBDData.size();
 }
 
+void ConfigurationWnd::onChargerBDGetClicked()
+{
+    emit sigChargerBDContentGetRequest();
+}
+
+void ConfigurationWnd::onChargerBDUpdateClicked()
+{
+    QString filePath = QFileDialog::getOpenFileName(this, "Select file to upload", "", "Binary (*.bin);;Text (*.txt *.hex);;All Files (*)");
+
+    if(filePath.isEmpty())
+        return;
+
+    QFile file(filePath);
+
+    if(!file.open(QIODevice::ReadOnly))
+        return;
+
+    QByteArray data;
+
+    if(filePath.endsWith(".bin"))
+    {
+        data = file.readAll();
+    }
+    else
+    {
+        QString text = file.readAll();
+
+        QString clean = text;
+        clean.remove(' ');
+        clean.remove('\n');
+        clean.remove('\r');
+
+        QRegularExpression hexRegex("^[0-9A-Fa-f]+$");
+
+        if(hexRegex.match(clean).hasMatch())
+        {
+            data = QByteArray::fromHex(clean.toUtf8());
+        }
+        else
+        {
+            data = text.toUtf8();
+        }
+    }
+
+    file.close();
+
+    if(data.isEmpty())
+        return;
+
+    emit sigChargerBDContentSetRequest(data);
+}
+
+void ConfigurationWnd::onChargerBDFormatClicked()
+{
+    emit sigChargerBDFormatRequest();
+}
+
+void ConfigurationWnd::onChargerBDExportClicked()
+{
+    QString filePath = QFileDialog::getSaveFileName(this, "Save charger memory content", "", "Binary (*.bin);;All Files (*)");
+
+    if(filePath.isEmpty())
+        return;
+
+    if(m_currentChargerBDData.isEmpty())
+    {
+        qDebug() << "No charger data available!";
+        return;
+    }
+
+    QFile file(filePath);
+
+    if(!file.open(QIODevice::WriteOnly))
+        return;
+
+    file.write(m_currentChargerBDData);
+    file.close();
+
+    qDebug() << "Saved charger bytes:" << m_currentChargerBDData.size();
+}
+
 void ConfigurationWnd::setBDProgress(int percent, const QString &text)
 {
     if(bdProgressBar == nullptr || bdProgressLabel == nullptr)
@@ -795,6 +916,89 @@ void ConfigurationWnd::resetBDProgress()
     bdProgressBar->setValue(0);
     bdProgressBar->setVisible(false);
     bdProgressLabel->setVisible(false);
+}
+
+void ConfigurationWnd::setChargerBDContent(const QString &content)
+{
+    if(chargerBDContentTextEdit == nullptr)
+        return;
+
+    QByteArray data = QByteArray::fromHex(content.toUtf8());
+    m_currentChargerBDData = data;
+    QByteArray prev = m_prevChargerBDData;
+
+    QString formatted;
+    int bytesPerLine = 16;
+    int totalBytes = data.size();
+
+    for(int i = 0; i < totalBytes; i++)
+    {
+        if(i % bytesPerLine == 0)
+        {
+            formatted += QString("%1: ").arg(i, 8, 16, QChar('0')).toUpper();
+        }
+
+        uint8_t byte = (uint8_t)data[i];
+
+        QString hex = QString("%1").arg(byte, 2, 16, QChar('0')).toUpper();
+
+        bool changed = (i < prev.size()) && (byte != (uint8_t)prev[i]);
+
+        if(changed)
+            formatted += "<span style=\"color:red;font-weight:bold;\">" + hex + "</span> ";
+        else
+            formatted += hex + " ";
+
+        if((i % bytesPerLine) == bytesPerLine - 1 || i == totalBytes - 1)
+        {
+            int lineStart = i - (i % bytesPerLine);
+            int lineEnd = i;
+
+            QString ascii = " |";
+
+            for(int j = lineStart; j <= lineEnd; j++)
+            {
+                uint8_t c = (uint8_t)data[j];
+
+                if(c >= 32 && c <= 126)
+                    ascii += QChar(c);
+                else
+                    ascii += '.';
+            }
+
+            ascii += "|";
+
+            formatted += ascii;
+            formatted += "<br>";
+        }
+    }
+
+    chargerBDContentTextEdit->setHtml("<pre style='font-family:Courier New;'>" + formatted + "</pre>");
+
+    m_prevChargerBDData = data;
+}
+
+void ConfigurationWnd::setChargerBDProgress(int percent, const QString &text)
+{
+    if(chargerBDProgressBar == nullptr || chargerBDProgressLabel == nullptr)
+        return;
+
+    chargerBDProgressBar->setVisible(true);
+    chargerBDProgressLabel->setVisible(true);
+
+    chargerBDProgressBar->setValue(percent);
+    chargerBDProgressBar->update();
+    chargerBDProgressLabel->setText(text);
+}
+
+void ConfigurationWnd::resetChargerBDProgress()
+{
+    if(chargerBDProgressBar == nullptr || chargerBDProgressLabel == nullptr)
+        return;
+
+    chargerBDProgressBar->setValue(0);
+    chargerBDProgressBar->setVisible(false);
+    chargerBDProgressLabel->setVisible(false);
 }
 
 
@@ -934,6 +1138,113 @@ QWidget* ConfigurationWnd::createBDMemoryWidget()
     return container;
 }
 
+QWidget *ConfigurationWnd::createChargerBDMemoryWidget()
+{
+    QWidget *container = new QWidget(this);
+    QVBoxLayout *layout = new QVBoxLayout(container);
+
+    QHBoxLayout *headerLayout = new QHBoxLayout();
+
+    QLabel *title = new QLabel("Memory Content", this);
+    QFont font = title->font();
+    font.setBold(true);
+    title->setFont(font);
+
+    QString btnStyle = R"(
+    QPushButton {
+        background: transparent;
+        border: none;
+    }
+    QPushButton:hover {
+        background-color: rgba(255,255,255,30);
+    }
+    QPushButton:pressed {
+        background-color: rgba(255,255,255,60);
+    }
+    QToolTip {
+        background-color: white;
+        color: black;
+        border: 1px solid #ccc;
+    }
+    )";
+
+    chargerBDGetButton = new QPushButton(this);
+    chargerBDGetButton->setFixedSize(CONFIG_BUTTON_WIDTH, CONFIG_BUTTON_HEIGHT);
+    chargerBDGetButton->setIcon(QIcon(":/images/NewSet/upload.png"));
+    chargerBDGetButton->setIconSize(QSize(24, 24));
+    chargerBDGetButton->setToolTip("Get charger memory content");
+
+    chargerBDUpdateButton = new QPushButton(this);
+    chargerBDUpdateButton->setFixedSize(CONFIG_BUTTON_WIDTH, CONFIG_BUTTON_HEIGHT);
+    chargerBDUpdateButton->setIcon(QIcon(":/images/NewSet/download.png"));
+    chargerBDUpdateButton->setIconSize(QSize(24, 24));
+    chargerBDUpdateButton->setToolTip("Update charger memory content");
+
+    chargerBDFormatButton = new QPushButton(this);
+    chargerBDFormatButton->setFixedSize(CONFIG_BUTTON_WIDTH, CONFIG_BUTTON_HEIGHT);
+    chargerBDFormatButton->setIcon(QIcon(":/images/NewSet/format.png"));
+    chargerBDFormatButton->setIconSize(QSize(24, 24));
+    chargerBDFormatButton->setToolTip("Format charger memory");
+
+    chargerBDExportButton = new QPushButton(this);
+    chargerBDExportButton->setFixedSize(CONFIG_BUTTON_WIDTH, CONFIG_BUTTON_HEIGHT);
+    chargerBDExportButton->setIcon(QIcon(":/images/NewSet/export.png"));
+    chargerBDExportButton->setIconSize(QSize(24, 24));
+    chargerBDExportButton->setToolTip("Export charger memory to PC");
+
+    chargerBDGetButton->setStyleSheet(btnStyle);
+    chargerBDUpdateButton->setStyleSheet(btnStyle);
+    chargerBDFormatButton->setStyleSheet(btnStyle);
+    chargerBDExportButton->setStyleSheet(btnStyle);
+
+    headerLayout->addWidget(title);
+    headerLayout->addStretch();
+
+    QHBoxLayout *progressLayout = new QHBoxLayout();
+
+    chargerBDProgressBar = new QProgressBar(this);
+    chargerBDProgressBar->setRange(0, 100);
+    chargerBDProgressBar->setValue(0);
+    chargerBDProgressBar->setTextVisible(true);
+    chargerBDProgressBar->setMinimumHeight(18);
+    chargerBDProgressBar->setMaximumHeight(18);
+
+    chargerBDProgressLabel = new QLabel("Idle", this);
+    chargerBDProgressLabel->setMinimumHeight(CONFIG_ROW_HEIGHT);
+    chargerBDProgressLabel->setMaximumHeight(CONFIG_ROW_HEIGHT);
+
+    chargerBDProgressBar->setVisible(true);
+    chargerBDProgressLabel->setVisible(true);
+
+    progressLayout->addWidget(chargerBDProgressBar);
+    progressLayout->addWidget(chargerBDProgressLabel);
+
+    headerLayout->addLayout(progressLayout);
+    headerLayout->addStretch();
+    headerLayout->addWidget(chargerBDGetButton);
+    headerLayout->addWidget(chargerBDUpdateButton);
+    headerLayout->addWidget(chargerBDFormatButton);
+    headerLayout->addWidget(chargerBDExportButton);
+
+    layout->addLayout(headerLayout);
+
+    chargerBDContentTextEdit = new QTextEdit(this);
+    chargerBDContentTextEdit->setReadOnly(true);
+    chargerBDContentTextEdit->setMinimumHeight(250);
+
+    QFont mono("Courier New");
+    chargerBDContentTextEdit->setFont(mono);
+
+    layout->addWidget(chargerBDContentTextEdit);
+
+    connect(chargerBDGetButton, &QPushButton::clicked, this, &ConfigurationWnd::onChargerBDGetClicked);
+    connect(chargerBDUpdateButton, &QPushButton::clicked, this, &ConfigurationWnd::onChargerBDUpdateClicked);
+    connect(chargerBDFormatButton, &QPushButton::clicked, this, &ConfigurationWnd::onChargerBDFormatClicked);
+    connect(chargerBDExportButton, &QPushButton::clicked, this, &ConfigurationWnd::onChargerBDExportClicked);
+
+    return container;
+}
+
 void ConfigurationWnd::onFieldChanged()
 {
     refreshStatusBar();
@@ -964,6 +1275,9 @@ void ConfigurationWnd::onSetConfigClicked()
     QMap<QString, QString> changedApplicationFields =
         getChangedFields(static_cast<Params::GroupId>(DeviceParamDefs::Group::ApplicationConfig));
 
+    QMap<QString, QString> changedChargerFields =
+        getChangedFields(static_cast<Params::GroupId>(DeviceParamDefs::Group::ChargerConfig));
+
     if(configurationStatusLabel != nullptr)
     {
         configurationStatusLabel->setText("Device status: Configuration apply requested");
@@ -977,6 +1291,10 @@ void ConfigurationWnd::onSetConfigClicked()
     if(changedApplicationFields.isEmpty() == false)
     {
         emit sigApplicationConfigSet(changedApplicationFields);
+    }
+    if(changedChargerFields.isEmpty() == false)
+    {
+        emit sigChargerConfigSet(changedChargerFields);
     }
 
     emit sigConfigSet(changedFields);

@@ -785,11 +785,11 @@ bool Device::setCalParam()
     float ccor = dataProcessing->getCalibrationData()->currentCorrection;
 
     QString command = QString("device param cal set -vref=%1 -voff=%2 -vcor=%3 -coff=%4 -ccor=%5")
-            .arg(vref, 0, 'f', 3)
-            .arg(voff, 0, 'f', 3)
-            .arg(vcor, 0, 'f', 3)
-            .arg(coff, 0, 'f', 3)
-            .arg(ccor, 0, 'f', 3);
+            .arg(vref, 0, 'f', 4)
+            .arg(voff, 0, 'f', 4)
+            .arg(vcor, 0, 'f', 4)
+            .arg(coff, 0, 'f', 4)
+            .arg(ccor, 0, 'f', 4);
 
     if(!controlLink->executeCommand(command, &response, 1000))
         return false;
@@ -1177,6 +1177,60 @@ bool Device::getBDFContentFull(QString *content)
     return true;
 }
 
+bool Device::getChargerBDContentFull(QString *content)
+{
+    if(controlLink == NULL || content == nullptr)
+        return false;
+
+    QString fullContent = "";
+
+    int i = 1;
+
+    QString command = "charger bd read";
+
+    QString response;
+
+    if(!controlLink->executeCommand(command, &response, 3000))
+    {
+        return false;
+    }
+
+    fullContent += response;
+
+    *content = fullContent;
+
+    return true;
+}
+
+bool Device::setChargerBDContent(QByteArray *content)
+{
+    if(controlLink == NULL || content == nullptr)
+        return false;
+
+    int totalBytes = content->size();
+
+    if(totalBytes == 0)
+        return false;
+
+    QByteArray command;
+    command += "charger bd write";
+    command += " -size=128";
+    command += " -data=";
+    command += *content;
+    command += " \r\n";
+
+    QString response;
+
+    if(!controlLink->executeCommand(command, &response, 3000))
+    {
+        return false;
+    }
+
+    //emit sigBDChunkWrite((float)i*((float)currentBytes/(float)totalBytes)*100);
+
+    return true;
+}
+
 bool Device::setBDFContent(QByteArray *content)
 {
     if(controlLink == NULL || content == nullptr)
@@ -1289,6 +1343,7 @@ bool Device::acquireDeviceConfiguration(device_adc_t aAdc)
     getChargerCurrent();
     getChargerTermCurrent();
     getChargerTermVoltage();
+    getChargerMaxChargingCurrent();
     getCalParam();
     getShuntParam();
     getGainParam();
@@ -1515,7 +1570,8 @@ bool Device::setLoadCurrent(int current)
 {
     QString response;
     //int adcValue = (int)((((float)current))/1.060445387);
-    int adcValue = computeFittedValue(current);
+    //int adcValue = computeFittedValue(current);
+    int adcValue = current;
     QString command = "device dac value set -value=" + QString::number(adcValue);
     if(controlLink == NULL) return false;
     if(!controlLink->executeCommand(command, &response, 1000)) return false;
@@ -1617,6 +1673,29 @@ bool Device::getChargerTermCurrent(int *current)
     return true;
 }
 
+bool Device::setChargerMaxChargingCurrent(int current)
+{
+    QString response;
+    QString command = "charger charging maxcurrent set -value=" + QString::number(current);
+    if(controlLink == NULL) return false;
+    if(!controlLink->executeCommand(command, &response, 1000)) return false;
+    if(response != "OK"){
+     return false;
+    }
+    return true;
+}
+bool Device::getChargerMaxChargingCurrent(int* current)
+{
+    QString response;
+    QString command = "charger charging maxcurrent get";
+    if(!controlLink->executeCommand(command, &response, 1000)) return false;
+    //Parse response
+    chargerTermCurrent = response.toInt();
+    if(current != NULL) *current = chargerTermCurrent;
+    emit sigChargerMaxChargingCurrentObtained(chargerTermCurrent);
+    return true;
+}
+
 bool Device::setChargerTermVoltage(float voltage)
 {
     QString response;
@@ -1638,6 +1717,28 @@ bool Device::getChargerTermVoltage(float *voltage)
     chargerTermVoltage = response.toFloat();
     if(voltage != NULL) *voltage = chargerTermVoltage;
     emit sigChargerTermVoltageObtained(chargerTermVoltage);
+    return true;
+}
+
+bool Device::getChargerHWSerial(QString* serial)
+{
+    QString response;
+    QString command = "charger hwserial get";
+    if(!controlLink->executeCommand(command, &response, 1000)) return false;
+    //Parse response
+    *serial = response;
+    emit sigChargerHWSerialObtained(*serial);
+    return true;
+}
+
+bool Device::getChargerFWVersion(QString *version)
+{
+    QString response;
+    QString command = "charger fwversion get";
+    if(!controlLink->executeCommand(command, &response, 1000)) return false;
+    //Parse response
+    *version = response;
+    emit sigChargerFWVersionObtained(*version);
     return true;
 }
 

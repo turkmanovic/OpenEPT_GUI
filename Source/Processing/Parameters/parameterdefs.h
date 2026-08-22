@@ -30,7 +30,14 @@ namespace Params
         Device,
         Application,
         Runtime,
-        Calculated
+        Calculated,
+        ChargerConfig
+    };
+
+    enum class Editor
+    {
+        LineEdit,
+        ComboBox
     };
 
     struct GroupMeta
@@ -69,6 +76,8 @@ namespace Params
 
         bool visible;
         int order;
+
+        Editor editor = Editor::LineEdit;
     };
 
     struct Param

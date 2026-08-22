@@ -102,7 +102,7 @@ public:
     bool chargerCurrentStatusSet(bool status);
     void chargingDone();
 
-    void chargerNameSet(const QString& name);
+    void chargerFWVersionSet(const QString& name);
     void chargerSerialNumberSet(const QString& serial);
     void chargerMaxCurrentSet(int current);
 

@@ -23,6 +23,12 @@ QList<Params::GroupMeta> defaultGroupMeta()
             "Calculated Values",
             "Values calculated by the application.",
             3
+        },
+        {
+            DeviceParamDefs::ChargerConfig,
+            "Charger Configuration",
+            "Charger COnfiguration if it is connected",
+            4
         }
     };
 }
@@ -79,9 +85,9 @@ QList<Params::SubGroupMeta> defaultSubGroupMeta()
             7
         },
         {
-            DeviceParamDefs::Charger,
-            "Charger",
-            "Battery charger configuration and runtime values.",
+            DeviceParamDefs::ChargerGeneral,
+            "General Info",
+            "General Charger Info",
             8
         },
         {
@@ -107,7 +113,19 @@ QList<Params::SubGroupMeta> defaultSubGroupMeta()
             "File Storage",
             "Application-side file saving parameters.",
             12
-        }
+        },
+        {
+            DeviceParamDefs::ChargerConf,
+            "Configuration",
+            "Configurable Charger Parameters",
+            13
+        },
+        {
+            DeviceParamDefs::ChargerBD,
+            "Memory",
+            "Charger Memory Editing",
+            14
+        },
     };
 }
 
@@ -655,7 +673,7 @@ QList<Params::Param> defaultParams()
                 QVariant(),
                 {"false", "true"},
                 true,
-                21
+                22
             },
             0,
             false
@@ -676,7 +694,7 @@ QList<Params::Param> defaultParams()
                 QVariant(),
                 {},
                 true,
-                0
+                23
             },
             5,
             true
@@ -697,7 +715,7 @@ QList<Params::Param> defaultParams()
                 QVariant(),
                 {"Combined"},
                 true,
-                1
+                24
             },
             "Combined",
             false
@@ -718,7 +736,7 @@ QList<Params::Param> defaultParams()
                 QVariant(),
                 {},
                 true,
-                0
+                25
             },
             -1,
             false
@@ -739,7 +757,7 @@ QList<Params::Param> defaultParams()
                 QVariant(),
                 {"false", "true"},
                 true,
-                1
+                26
             },
             false,
             false
@@ -760,7 +778,7 @@ QList<Params::Param> defaultParams()
                 QVariant(),
                 {"false", "true"},
                 true,
-                2
+                27
             },
             false,
             false
@@ -781,7 +799,7 @@ QList<Params::Param> defaultParams()
                 QVariant(),
                 {},
                 true,
-                3
+                28
             },
             0,
             false
@@ -802,7 +820,7 @@ QList<Params::Param> defaultParams()
                 QVariant(),
                 {"false", "true"},
                 true,
-                4
+                29
             },
             false,
             false
@@ -823,7 +841,7 @@ QList<Params::Param> defaultParams()
                 QVariant(),
                 {"false", "true"},
                 true,
-                5
+                30
             },
             false,
             false
@@ -844,7 +862,7 @@ QList<Params::Param> defaultParams()
                 QVariant(),
                 {"false", "true"},
                 true,
-                6
+                31
             },
             false,
             false
@@ -865,7 +883,7 @@ QList<Params::Param> defaultParams()
                 QVariant(),
                 {"false", "true"},
                 true,
-                7
+                32
             },
             false,
             false
@@ -886,7 +904,7 @@ QList<Params::Param> defaultParams()
                 QVariant(),
                 {"false", "true"},
                 true,
-                8
+                33
             },
             false,
             false
@@ -907,9 +925,156 @@ QList<Params::Param> defaultParams()
                 QVariant(),
                 {},
                 true,
-                0
+                34
             },
             0.0,
+            false
+        },
+        {
+            {
+                "chargerSerial",
+                "Serial Number",
+                "Charger Serial Number",
+                "",
+                DeviceParamDefs::ChargerConfig,
+                DeviceParamDefs::ChargerGeneral,
+                Params::Access::ReadOnly,
+                Params::Storage::SaveOnly,
+                Params::Target::ChargerConfig,
+                {},
+                {},
+                {},
+                {},
+                true,
+                35
+            },
+            "",
+            false
+        },
+        {
+            {
+                "chargerFwVersion",
+                "Firmware Version",
+                "Charger Firmware Version",
+                "",
+                DeviceParamDefs::ChargerConfig,
+                DeviceParamDefs::ChargerGeneral,
+                Params::Access::ReadOnly,
+                Params::Storage::LoadSave,
+                Params::Target::ChargerConfig,
+                {},
+                {},
+                {},
+                {},
+                true,
+                36
+            },
+            "",
+            false
+        },
+        {
+            {
+                "chargerTermVoltage",
+                "Termination Voltage",
+                "Charger Termination Voltage that start CV charging phase",
+                "V",
+                DeviceParamDefs::ChargerConfig,
+                DeviceParamDefs::ChargerConf,
+                Params::Access::ReadWrite,
+                Params::Storage::SaveOnly,
+                Params::Target::ChargerConfig,
+                4.2,
+                1.0,
+                5.0,
+                {},
+                true,
+                37
+            },
+            0,
+            false
+        },
+        {
+            {
+                "chargerTermCurrent",
+                "Termination Current",
+                "Charger Termination Current in percentage of Charge current",
+                "%",
+                DeviceParamDefs::ChargerConfig,
+                DeviceParamDefs::ChargerConf,
+                Params::Access::ReadWrite,
+                Params::Storage::SaveOnly,
+                Params::Target::ChargerConfig,
+                20,
+                10,
+                80,
+                {},
+                true,
+                38
+            },
+            0,
+            false
+        },
+        {
+            {
+                "chargerChargeCurrent",
+                "Charging Current",
+                "Charging Current",
+                "mA",
+                DeviceParamDefs::ChargerConfig,
+                DeviceParamDefs::ChargerConf,
+                Params::Access::ReadWrite,
+                Params::Storage::SaveOnly,
+                Params::Target::ChargerConfig,
+                100,
+                10,
+                1000,
+                {},
+                true,
+                39
+            },
+            0,
+            false
+        },
+        {
+            {
+                "chargerMaxChargeCurrent",
+                "Max Charging Current",
+                "Max Charging Current",
+                "mA",
+                DeviceParamDefs::ChargerConfig,
+                DeviceParamDefs::ChargerConf,
+                Params::Access::ReadWrite,
+                Params::Storage::SaveOnly,
+                Params::Target::ChargerConfig,
+                500,
+                10,
+                1000,
+                {},
+                true,
+                40
+            },
+            0,
+            false
+        },
+        {
+            {
+                "chargerBdSize",
+                "EEPROM Memory size",
+                "Non Volatile memory size",
+                "",
+                DeviceParamDefs::ChargerConfig,
+                DeviceParamDefs::ChargerBD,
+                Params::Access::ReadOnly,
+                Params::Storage::None,
+                Params::Target::ChargerConfig,
+                {},
+                {},
+                {},
+                {},
+                true,
+                41
+            },
+            0,
             false
         }
     };

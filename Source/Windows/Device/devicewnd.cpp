@@ -349,6 +349,21 @@ void DeviceWnd::onConfWndBDFormat()
     emit sigBDFormat();
 }
 
+void DeviceWnd::onChargerConfWndGetBDContent()
+{
+    emit sigChargerReadFullBDContent();
+}
+
+void DeviceWnd::onChargerConfWndSetBDContent(QByteArray content)
+{
+    emit sigChargerSetBDContent(content);
+}
+
+void DeviceWnd::onChargerConfWndBDFormat()
+{
+    emit sigChargerBDFormat();
+}
+
 void DeviceWnd::onConsolePressed()
 {
     consoleWnd->show();
@@ -485,6 +500,21 @@ void DeviceWnd::setParameters(DeviceParameters *params)
             &ConfigurationWnd::sigBDFormatRequest,
             this,
             &DeviceWnd::onConfWndBDFormat);
+
+    connect(configurationWnd,
+            &ConfigurationWnd::sigChargerBDContentGetRequest,
+            this,
+            &DeviceWnd::onChargerConfWndGetBDContent);
+
+    connect(configurationWnd,
+            &ConfigurationWnd::sigChargerBDContentSetRequest,
+            this,
+            &DeviceWnd::onChargerConfWndSetBDContent);
+
+    connect(configurationWnd,
+            &ConfigurationWnd::sigChargerBDFormatRequest,
+            this,
+            &DeviceWnd::onChargerConfWndBDFormat);
 
 
     connect(this, &QObject::destroyed,
@@ -719,22 +749,95 @@ bool DeviceWnd::setBDContent(QString content)
     return true;
 }
 
+bool DeviceWnd::setChargerBDContent(QString content)
+{
+    configurationWnd->setChargerBDContent(content);
+    return true;
+}
+
 bool DeviceWnd::setChargerCurrent(int current)
 {
     energyControlWnd->chargerCurrentSet(current);
     energyControlWnd->chdischChargeCurrentSet(current);
+
+    configurationWnd->setParamValue("chargerChargeCurrent", QString::number(current));
     return true;
 }
 
 bool DeviceWnd::setChargerTermCurrent(int current)
 {
     energyControlWnd->chargerTermCurrentSet(current);
+
+    configurationWnd->setParamValue("chargerTermCurrent", QString::number(current));
     return true;
 }
 
 bool DeviceWnd::setChargerTermVoltage(float voltage)
 {
     energyControlWnd->chargerTermVoltageSet(voltage);
+
+    configurationWnd->setParamValue("chargerTermVoltage", QString::number(voltage));
+    return true;
+}
+
+bool DeviceWnd::setChargerMaxCurrent(int current)
+{
+    int currentMa = 0;
+
+    switch(current)
+    {
+        case 0:
+            currentMa = 50;
+            break;
+
+        case 1:
+            currentMa = 100;
+            break;
+
+        case 2:
+            currentMa = 200;
+            break;
+
+        case 3:
+            currentMa = 300;
+            break;
+
+        case 4:
+            currentMa = 400;
+            break;
+
+        case 5:
+            currentMa = 500;
+            break;
+
+        case 6:
+            currentMa = 700;
+            break;
+
+        case 7:
+            currentMa = 1100;
+            break;
+
+        default:
+            return false;
+    }
+
+    configurationWnd->setParamValue("chargerMaxChargeCurrent", QString::number(currentMa));
+
+    return true;
+}
+
+bool DeviceWnd::setChargerHWSerial(QString serial)
+{
+    configurationWnd->setParamValue("chargerSerial", serial);
+    energyControlWnd->chargerFWVersionSet(serial);
+    return true;
+}
+
+bool DeviceWnd::setChargerFWSerial(QString serial)
+{
+    configurationWnd->setParamValue("chargerFwVersion", serial);
+    energyControlWnd->chargerSerialNumberSet(serial);
     return true;
 }
 
@@ -797,6 +900,11 @@ void DeviceWnd::setConfigurationAppliedStatus(bool status)
 void DeviceWnd::setConfigurationBDProgressStatus(int percentage, QString status)
 {
     configurationWnd->setBDProgress(percentage, status);
+}
+
+void DeviceWnd::setConfigurationChargerBDProgressStatus(int percentage, QString status)
+{
+    configurationWnd->setChargerBDProgress(percentage, status);
 }
 
 

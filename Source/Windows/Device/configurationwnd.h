@@ -46,6 +46,10 @@ public:
     void setBDProgress(int percent, const QString &text);
     void resetBDProgress();
 
+    void setChargerBDContent(const QString &content);
+    void setChargerBDProgress(int percent, const QString &text);
+    void resetChargerBDProgress();
+
 signals:
     void sigDeviceConfigSet(QMap<QString, QString> changedFields);
     void sigDeviceConfigStore();
@@ -58,6 +62,11 @@ signals:
     void sigBDContentGetRequest();
     void sigBDContentSetRequest(QByteArray content);
     void sigBDFormatRequest();
+
+    void sigChargerBDContentGetRequest();
+    void sigChargerBDContentSetRequest(QByteArray content);
+    void sigChargerBDFormatRequest();
+    void sigChargerConfigSet(QMap<QString, QString> changedFields);
 
 
 private slots:
@@ -72,6 +81,11 @@ private slots:
     void onBDUpdateClicked();
     void onBDFormatClicked();
     void onBDExportClicked();
+
+    void onChargerBDGetClicked();
+    void onChargerBDUpdateClicked();
+    void onChargerBDFormatClicked();
+    void onChargerBDExportClicked();
 
 private:
     Ui::ConfigurationWnd *ui;
@@ -133,6 +147,21 @@ private:
     QWidget* createBDMemoryWidget();
     QByteArray m_currentBDData;
     QByteArray m_prevBDData;
+
+    QTextEdit *chargerBDContentTextEdit;
+    QPushButton *chargerBDGetButton;
+    QPushButton *chargerBDUpdateButton;
+    QPushButton *chargerBDFormatButton;
+    QPushButton *chargerBDExportButton;
+    QProgressBar *chargerBDProgressBar;
+    QLabel *chargerBDProgressLabel;
+
+    QWidget *createChargerBDMemoryWidget();
+
+    QByteArray m_currentChargerBDData;
+    QByteArray m_prevChargerBDData;
+
+
 };
 
 #endif // CONFIGURATIONWND_H

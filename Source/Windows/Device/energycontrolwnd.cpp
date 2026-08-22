@@ -124,17 +124,17 @@ EnergyControlWnd::EnergyControlWnd(QWidget *parent) :
 
     chargerTopLayout->addLayout(createSectionHeader("Charger Info"));
 
-    chargerTopLayout->addLayout(createEntryRow("Charger Name", "", chargerInfoEdits));
+    chargerTopLayout->addLayout(createEntryRow("Charger FW Version", "", chargerInfoEdits));
     chargerTopLayout->addLayout(createEntryRow("Charger Serial Number", "", chargerInfoEdits));
     chargerTopLayout->addLayout(createEntryRow("Max Charging Current", "mA", chargerInfoEdits));
 
-    chargerInfoEdits["Charger Name"]->setReadOnly(true);
+    chargerInfoEdits["Charger FW Version"]->setReadOnly(true);
     chargerInfoEdits["Charger Serial Number"]->setReadOnly(true);
     chargerInfoEdits["Max Charging Current"]->setReadOnly(true);
 
     QString infoStyle = "background-color: rgb(245,245,245);";
 
-    chargerInfoEdits["Charger Name"]->setStyleSheet(infoStyle);
+    chargerInfoEdits["Charger FW Version"]->setStyleSheet(infoStyle);
     chargerInfoEdits["Charger Serial Number"]->setStyleSheet(infoStyle);
     chargerInfoEdits["Max Charging Current"]->setStyleSheet(infoStyle);
 
@@ -1385,9 +1385,9 @@ void EnergyControlWnd::chargingDone()
 
 }
 
-void EnergyControlWnd::chargerNameSet(const QString& name)
+void EnergyControlWnd::chargerFWVersionSet(const QString& name)
 {
-    chargerInfoEdits["Charger Name"]->setText(name);
+    chargerInfoEdits["Charger FW Version"]->setText(name);
 }
 
 void EnergyControlWnd::chargerSerialNumberSet(const QString& serial)

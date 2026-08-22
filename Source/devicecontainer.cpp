@@ -83,7 +83,12 @@ DeviceContainer::DeviceContainer(QObject *parent,
     connect(device,     SIGNAL(sigChargerCurrentObtained(int )),                    this,  SLOT(onDeviceChargerCurrentObtained(int)));
     connect(device,     SIGNAL(sigChargerTermCurrentObtained(int )),                this,  SLOT(onDeviceChargerTermCurrentObtained(int)));
     connect(device,     SIGNAL(sigChargerTermVoltageObtained(float )),              this,  SLOT(onDeviceChargerTermVoltageObtained(float)));
+    connect(device,     SIGNAL(sigChargerMaxChargingCurrentObtained(int )),         this,  SLOT(onDeviceChargerMaxCurrentObtained(int)));
     connect(device,     SIGNAL(sigChargingDone()),                                  this,  SLOT(onDeviceChargingDone()));
+
+
+    connect(device,     SIGNAL(sigChargerHWSerialObtained(QString)),                this,  SLOT(onDeviceChargerHWSerialObtained(QString)));
+    connect(device,     SIGNAL(sigChargerFWVersionObtained(QString)),                this,  SLOT(onDeviceChargerFWVersionObtained(QString)));
 
     connect(device,     SIGNAL(sigVoltageCurrentSamplesReceived(QVector<double>,QVector<double>,QVector<double>, QVector<double>)),
             this, SLOT(onDeviceNewVoltageCurrentSamplesReceived(QVector<double>,QVector<double>,QVector<double>, QVector<double>)));
@@ -123,6 +128,14 @@ DeviceContainer::DeviceContainer(QObject *parent,
 
     connect(deviceWnd, SIGNAL(sigBDFormat()),
             this, SLOT(onDeviceWndBDFormat()));
+
+
+    connect(deviceWnd, SIGNAL(sigChargerReadFullBDContent()),
+            this, SLOT(onDeviceWndChargerGetBDContent()));
+
+
+    connect(deviceWnd, SIGNAL(sigChargerSetBDContent(QByteArray)),
+            this, SLOT(onDeviceWndChargerSetBDContent(QByteArray)));
 
 
 
@@ -824,6 +837,39 @@ void DeviceContainer::onDeviceWndBDFormat()
 
 }
 
+void DeviceContainer::onDeviceWndChargerGetBDContent()
+{
+
+    QString content;
+    bool exeStatus = device->getChargerBDContentFull(&content);
+    logResult(exeStatus,
+              "Full charger memory content read",
+              "Unable to read charger memory ");
+
+    if(exeStatus)
+    {
+        deviceWnd->setChargerBDContent(content);
+        deviceWnd->setConfigurationChargerBDProgressStatus(100.0, "BD Read Successfully");
+    }
+}
+
+void DeviceContainer::onDeviceWndChargerSetBDContent(QByteArray content)
+{
+    bool exeStatus = device->setChargerBDContent(&content);
+    logResult(exeStatus,
+              "Block device content set",
+              "Unable to set memory block content");
+    if(exeStatus)
+    {
+        deviceWnd->setConfigurationBDProgressStatus(100.0, "BD Written Successfully");
+    }
+}
+
+void DeviceContainer::onDeviceWndChargerBDFormat()
+{
+
+}
+
 void DeviceContainer::onDeviceAcquisitonStarted()
 {
     elapsedTime = 0;
@@ -1008,6 +1054,17 @@ void DeviceContainer::onDeviceChargerConnectionStatusOntained(bool state)
 {
     deviceWnd->setChargerConnectionStatus(state);
 
+    if(state == true)
+    {
+        QString hwSerial, fwversion;
+        device->getChargerCurrent();
+        device->getChargerTermCurrent();
+        device->getChargerTermVoltage();
+        device->getChargerFWVersion(&fwversion);
+        device->getChargerHWSerial(&hwSerial);
+        device->getChargerMaxChargingCurrent();
+    }
+
     logResult(state,
               "Charger connected",
               "Charger disconnected");
@@ -1101,6 +1158,31 @@ void DeviceContainer::onDeviceChargerTermVoltageObtained(float voltage)
     logResult(ok,
               "Charge termination voltage successfully obtained and presented",
               "Unable to obtain charge termination voltage");
+}
+void DeviceContainer::onDeviceChargerMaxCurrentObtained(int current)
+{
+    bool ok = deviceWnd->setChargerMaxCurrent(current);
+
+    logResult(ok,
+              "Charger max current successfully obtained and presented",
+              "Unable to obtain charger max current");
+}
+void DeviceContainer::onDeviceChargerHWSerialObtained(QString serial)
+{
+    bool ok = deviceWnd->setChargerHWSerial(serial);
+
+    logResult(ok,
+              "Charger serial number obtained and presented",
+              "Unable to obtain charger serial number");
+}
+
+void DeviceContainer::onDeviceChargerFWVersionObtained(QString serial)
+{
+    bool ok = deviceWnd->setChargerFWSerial(serial);
+
+    logResult(ok,
+              "Charger fw version successfully obtained and presented",
+              "Unable to obtain charger fw version");
 }
 
 void DeviceContainer::onDeviceWndLoadCurrentSetValue(unsigned int current)

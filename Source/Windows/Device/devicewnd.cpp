@@ -766,9 +766,33 @@ bool DeviceWnd::setChargerCurrent(int current)
 
 bool DeviceWnd::setChargerTermCurrent(int current)
 {
-    energyControlWnd->chargerTermCurrentSet(current);
+    int currentPercent = 0;
 
-    configurationWnd->setParamValue("chargerTermCurrent", QString::number(current));
+    switch(current)
+    {
+        case 0:
+            currentPercent = 0;
+            break;
+
+        case 1:
+            currentPercent = 5;
+            break;
+
+        case 2:
+            currentPercent = 10;
+            break;
+
+        case 3:
+            currentPercent = 20;
+            break;
+
+        default:
+            return false;
+    }
+
+    energyControlWnd->chargerTermCurrentSet(currentPercent);
+    configurationWnd->setParamValue("chargerTermCurrent", QString::number(currentPercent));
+
     return true;
 }
 
@@ -823,6 +847,8 @@ bool DeviceWnd::setChargerMaxCurrent(int current)
     }
 
     configurationWnd->setParamValue("chargerMaxChargeCurrent", QString::number(currentMa));
+
+    energyControlWnd->chargerMaxCurrentSet(currentMa);
 
     return true;
 }

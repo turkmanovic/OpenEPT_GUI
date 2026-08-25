@@ -297,13 +297,156 @@ void DeviceContainer::fillDeviceSetFunctions()
         p.setFn = nullptr;
         p.getFn = nullptr;
     }
+
+    /**************************************************************
+     * CHARGER
+     **************************************************************/
+    {
+        auto &p = params->getParamRef("chargerHWSerial");
+        p.setFn = nullptr;
+        p.getFn = [this](){
+            device->getChargerHWSerial();
+        };
+    }
+
+    {
+        auto &p = params->getParamRef("chargerFWVersion");
+        p.setFn = nullptr;
+        p.getFn = [this](){
+            device->getChargerFWVersion();
+        };
+    }
+    {
+        auto &p = params->getParamRef("chargerChargeCurrent");
+        p.setFn = [this](const QVariant& v){
+            return device->setChargerCurrent(v.toInt());
+        };
+        p.getFn = [this](){
+            device->getChargerCurrent();
+        };
+    }
+
+    {
+        auto &p = params->getParamRef("chargerTermCurrent");
+
+        p.setFn = [this](const QVariant& v){
+            int current = v.toInt();
+            int currentId;
+
+            switch(current)
+            {
+                case 0:
+                    currentId = 0;
+                    break;
+
+                case 5:
+                    currentId = 1;
+                    break;
+
+                case 10:
+                    currentId = 2;
+                    break;
+
+                case 20:
+                    currentId = 3;
+                    break;
+
+                default:
+                    return false;
+            }
+
+            return device->setChargerTermCurrent(currentId);
+        };
+
+        p.getFn = [this](){
+            device->getChargerTermCurrent();
+        };
+    }
+
+    {
+        auto &p = params->getParamRef("chargerMaxChargeCurrent");
+
+        p.setFn = [this](const QVariant& v){
+            int current = v.toInt();
+            int currentId;
+
+            switch(current)
+            {
+                case 50:
+                    currentId = 0;
+                    break;
+
+                case 100:
+                    currentId = 1;
+                    break;
+
+                case 200:
+                    currentId = 2;
+                    break;
+
+                case 300:
+                    currentId = 3;
+                    break;
+
+                case 400:
+                    currentId = 4;
+                    break;
+
+                case 500:
+                    currentId = 5;
+                    break;
+
+                case 700:
+                    currentId = 6;
+                    break;
+
+                case 1100:
+                    currentId = 7;
+                    break;
+
+                default:
+                    return false;
+            }
+
+            return device->setChargerMaxChargingCurrent(currentId);
+        };
+
+        p.getFn = [this](){
+            device->getChargerMaxChargingCurrent();
+        };
+    }
+
+    {
+        auto &p = params->getParamRef("chargerTermVoltage");
+        p.setFn = [this](const QVariant& v){
+            return device->setChargerTermVoltage(v.toFloat());
+        };
+        p.getFn = [this](){
+            device->getChargerTermVoltage();
+        };
+    }
+
+    {
+        auto &p = params->getParamRef("chargerHWSerial");
+        p.setFn = nullptr;
+        p.getFn = [this](){
+            device->getChargerHWSerial();
+        };
+    }
+
+    {
+        auto &p = params->getParamRef("chargerFWVersion");
+        p.setFn = nullptr;
+        p.getFn = [this](){
+            device->getChargerFWVersion();
+        };
+    }
 }
 DeviceContainer::~DeviceContainer()
 {
     if(timer)
         timer->stop();
 
-    /* 🔥 OVO JE KLJUČ */
     if(m_dock)
     {
         m_dock->close();

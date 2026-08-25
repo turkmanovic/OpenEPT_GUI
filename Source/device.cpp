@@ -809,7 +809,7 @@ bool Device::storeParam()
 {
     QString response;
     QString command = "device param store";
-    if(!controlLink->executeCommand(command, &response, 1000)) return false;
+    if(!controlLink->executeCommand(command, &response, 5000)) return false;
     return true;
 }
 
@@ -1823,6 +1823,15 @@ void Device::onStatusLinkNewMessageReceived(QString aDeviceIP, QString aMessage)
                     emit sigUVoltageObtained(true);
                 else
                     emit sigUVoltageObtained(false);
+            }
+            if (content.startsWith("ovoltage ", Qt::CaseInsensitive))
+            {
+                QString action = content.mid(QString("uvoltage ").length()).trimmed();
+
+                if (action.compare("enabled", Qt::CaseInsensitive) == 0)
+                    emit sigOVoltageObtained(true);
+                else
+                    emit sigOVoltageObtained(false);
             }
             if (content.startsWith("ocurrent ", Qt::CaseInsensitive))
             {

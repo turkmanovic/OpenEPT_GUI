@@ -17,6 +17,7 @@
 #include <QSignalBlocker>
 #include <QFile>
 #include <QFileDialog>
+#include <QComboBox>
 
 #define CONFIG_LABEL_WIDTH     150
 #define CONFIG_FIELD_WIDTH     170
@@ -92,7 +93,7 @@ void ConfigurationWnd::setFieldEditable(const QString &key, bool editable)
         return;
     }
 
-    fields[key]->setReadOnly(!editable);
+    setFieldWidgetEditable(fields[key], editable);
 }
 
 void ConfigurationWnd::setConfigurationAcquiredStatus(bool status)
@@ -122,7 +123,7 @@ void ConfigurationWnd::setConfigurationAppliedStatus(bool status)
 
         for(auto it = fields.begin(); it != fields.end(); ++it)
         {
-            appliedValues[it.key()] = it.value()->text();
+            appliedValues[it.key()] = getFieldValue(it.value());
         }
     }
     else
@@ -464,10 +465,29 @@ QWidget *ConfigurationWnd::createParamWidget(const Params::Param &param)
 
     QHBoxLayout *fieldLayout = new QHBoxLayout();
 
-    QLineEdit *field = new QLineEdit(this);
-    field->setFixedWidth(CONFIG_FIELD_WIDTH);
-    field->setMinimumHeight(CONFIG_ROW_HEIGHT);
-    field->setToolTip(param.meta.description);
+    QWidget *field = nullptr;
+
+    if(param.meta.editor == Params::Editor::ComboBox)
+    {
+        QComboBox *comboBox = new QComboBox(this);
+
+        comboBox->setFixedWidth(CONFIG_FIELD_WIDTH);
+        comboBox->setMinimumHeight(CONFIG_ROW_HEIGHT);
+        comboBox->setToolTip(param.meta.description);
+        comboBox->addItems(param.meta.allowedValues);
+
+        field = comboBox;
+    }
+    else
+    {
+        QLineEdit *lineEdit = new QLineEdit(this);
+
+        lineEdit->setFixedWidth(CONFIG_FIELD_WIDTH);
+        lineEdit->setMinimumHeight(CONFIG_ROW_HEIGHT);
+        lineEdit->setToolTip(param.meta.description);
+
+        field = lineEdit;
+    }
 
     QLabel *unitLabel = new QLabel(param.meta.unit, this);
     unitLabel->setFixedWidth(CONFIG_UNIT_WIDTH);
@@ -484,7 +504,54 @@ QWidget *ConfigurationWnd::createParamWidget(const Params::Param &param)
 
     return controlWidget;
 }
+QString ConfigurationWnd::getFieldValue(QWidget *field) const
+{
+    if(QLineEdit *lineEdit = qobject_cast<QLineEdit*>(field))
+    {
+        return lineEdit->text();
+    }
 
+    if(QComboBox *comboBox = qobject_cast<QComboBox*>(field))
+    {
+        return comboBox->currentText();
+    }
+
+    return QString();
+}
+void ConfigurationWnd::setFieldWidgetValue(QWidget *field, const QString &value)
+{
+    if(QLineEdit *lineEdit = qobject_cast<QLineEdit*>(field))
+    {
+        lineEdit->setText(value);
+        return;
+    }
+
+    if(QComboBox *comboBox = qobject_cast<QComboBox*>(field))
+    {
+        int index = comboBox->findText(value);
+
+        if(index >= 0)
+        {
+            comboBox->setCurrentIndex(index);
+        }
+
+        return;
+    }
+}
+void ConfigurationWnd::setFieldWidgetEditable(QWidget *field, bool editable)
+{
+    if(QLineEdit *lineEdit = qobject_cast<QLineEdit*>(field))
+    {
+        lineEdit->setReadOnly(!editable);
+        return;
+    }
+
+    if(QComboBox *comboBox = qobject_cast<QComboBox*>(field))
+    {
+        comboBox->setEnabled(editable);
+        return;
+    }
+}
 QHBoxLayout *ConfigurationWnd::createButtonsRow()
 {
     QHBoxLayout *buttonsLayout = new QHBoxLayout();
@@ -546,56 +613,71 @@ QVBoxLayout *ConfigurationWnd::createStatusBarLayout()
     return statusLayout;
 }
 
-void ConfigurationWnd::registerField(const Params::Param &param,
-                                     QLineEdit *field)
+void ConfigurationWnd::registerField(const Params::Param &param, QWidget *field)
 {
     const QString key = param.meta.key;
 
     fields[key] = field;
     displayNames[key] = param.meta.displayName;
 
-    if (param.initialized)
+    if(param.initialized)
     {
-        field->setText(param.value.toString());
+        setFieldWidgetValue(field, param.value.toString());
         appliedValues[key] = param.value.toString();
         field->setStyleSheet("");
-        field->setReadOnly(!m_params->isEditable(key));
+        setFieldWidgetEditable(field, m_params->isEditable(key));
     }
     else
     {
-        field->setText("");
-        field->setStyleSheet("QLineEdit { background-color: #e0e0e0; color: #707070; }");
-        field->setPlaceholderText("Not acquired");
         appliedValues[key] = QString();
-        field->setReadOnly(true);
+        setFieldWidgetEditable(field, false);
+
+        if(QLineEdit *lineEdit = qobject_cast<QLineEdit*>(field))
+        {
+            lineEdit->setText("");
+            lineEdit->setStyleSheet("QLineEdit { background-color: #e0e0e0; color: #707070; }");
+            lineEdit->setPlaceholderText("Not acquired");
+        }
+        else if(QComboBox *comboBox = qobject_cast<QComboBox*>(field))
+        {
+            comboBox->setCurrentIndex(-1);
+        }
     }
 
-
-    connect(field,
-            &QLineEdit::textChanged,
-            this,
-            &ConfigurationWnd::onFieldChanged);
+    if(QLineEdit *lineEdit = qobject_cast<QLineEdit*>(field))
+    {
+        connect(lineEdit, &QLineEdit::textChanged, this, &ConfigurationWnd::onFieldChanged);
+    }
+    else if(QComboBox *comboBox = qobject_cast<QComboBox*>(field))
+    {
+        connect(comboBox, &QComboBox::currentTextChanged, this, &ConfigurationWnd::onFieldChanged);
+    }
 }
 
-void ConfigurationWnd::setFieldValue(const QString &key,
-                                     const QString &value,
-                                     bool markAsApplied)
+void ConfigurationWnd::setFieldValue(const QString &key, const QString &value, bool markAsApplied)
 {
     if(fields.contains(key) == false)
         return;
 
-    QSignalBlocker blocker(fields[key]);
+    QWidget *field = fields[key];
 
-    fields[key]->setText(value);
-    fields[key]->setPlaceholderText("");
-    fields[key]->setStyleSheet("");
-    if(m_params->getParam(key).meta.access != Params::Access::ReadWrite){
-        fields[key]->setReadOnly(true);
-        fields[key]->setStyleSheet("QLineEdit { background-color: #e0e0e0; color: #707070; }");
+    QSignalBlocker blocker(field);
+
+    setFieldWidgetValue(field, value);
+    field->setStyleSheet("");
+
+    if(m_params->getParam(key).meta.access != Params::Access::ReadWrite)
+    {
+        setFieldWidgetEditable(field, false);
+
+        if(QLineEdit *lineEdit = qobject_cast<QLineEdit*>(field))
+        {
+            lineEdit->setStyleSheet("QLineEdit { background-color: #e0e0e0; color: #707070; }");
+        }
     }
     else
     {
-        fields[key]->setReadOnly(false);
+        setFieldWidgetEditable(field, true);
     }
 
     if(markAsApplied == true)
@@ -611,17 +693,17 @@ QMap<QString, QString> ConfigurationWnd::getChangedFields() const
     for(auto it = fields.constBegin(); it != fields.constEnd(); ++it)
     {
         const QString key = it.key();
+        const QString currentValue = getFieldValue(it.value());
 
         if(m_params != nullptr)
         {
             if(m_params->isEditable(key) == false)
                 continue;
 
-            if(m_params->isInitialized(key) == false && it.value()->text().isEmpty())
+            if(m_params->isInitialized(key) == false && currentValue.isEmpty())
                 continue;
         }
 
-        const QString currentValue = it.value()->text();
         const QString appliedValue = appliedValues.value(key);
 
         if(currentValue != appliedValue)
@@ -1294,7 +1376,7 @@ void ConfigurationWnd::onSetConfigClicked()
     }
     if(changedChargerFields.isEmpty() == false)
     {
-        emit sigChargerConfigSet(changedChargerFields);
+        emit sigDeviceConfigSet(changedChargerFields);
     }
 
     emit sigConfigSet(changedFields);

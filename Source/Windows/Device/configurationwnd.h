@@ -21,6 +21,7 @@ class QGridLayout;
 class QGroupBox;
 class QTabWidget;
 class QLayout;
+class QComboBox;
 
 namespace Ui {
 class ConfigurationWnd;
@@ -102,7 +103,7 @@ private:
     QPushButton *acquireConfigButton;
     QPushButton *resetDeviceButton;
 
-    QMap<QString, QLineEdit*> fields;
+    QMap<QString, QWidget*> fields;
     QMap<QString, QString> appliedValues;
     QMap<QString, QString> displayNames;
 
@@ -120,12 +121,15 @@ private:
     QHBoxLayout *createButtonsRow();
     QVBoxLayout *createStatusBarLayout();
 
-    void registerField(const Params::Param &param,
-                       QLineEdit *field);
+    void registerField(const Params::Param &param, QWidget *field);
 
     void setFieldValue(const QString &key,
                        const QString &value,
                        bool markAsApplied);
+
+    QString getFieldValue(QWidget *field) const;
+    void setFieldWidgetValue(QWidget *field, const QString &value);
+    void setFieldWidgetEditable(QWidget *field, bool editable);
 
     QMap<QString, QString> getChangedFields() const;
     QMap<QString, QString> getChangedFields(Params::GroupId group) const;

@@ -1007,9 +1007,10 @@ QList<Params::Param> defaultParams()
                 20,
                 10,
                 80,
-                {},
+                {"0","5", "10", "20"},
                 true,
-                38
+                38,
+                Params::Editor::ComboBox
             },
             0,
             false
@@ -1047,11 +1048,12 @@ QList<Params::Param> defaultParams()
                 Params::Storage::SaveOnly,
                 Params::Target::ChargerConfig,
                 500,
-                10,
-                1000,
-                {},
+                50,
+                1100,
+                {"50", "100", "200", "300", "400", "500", "700", "1100"},
                 true,
-                40
+                40,
+                Params::Editor::ComboBox
             },
             0,
             false

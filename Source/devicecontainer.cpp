@@ -1206,11 +1206,13 @@ void DeviceContainer::onDeviceChargerConnectionStatusOntained(bool state)
         device->getChargerFWVersion(&fwversion);
         device->getChargerHWSerial(&hwSerial);
         device->getChargerMaxChargingCurrent();
+        log->printLogMessage("Charger connected", LOG_MESSAGE_TYPE_INFO);
+    }
+    else
+    {
+        log->printLogMessage("Charger disconnected", LOG_MESSAGE_TYPE_WARNING);
     }
 
-    logResult(state,
-              "Charger connected",
-              "Charger disconnected");
 }
 
 void DeviceContainer::onDeviceOVoltageObtained(bool state)

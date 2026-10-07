@@ -3,11 +3,19 @@
 
 #include <QObject>
 #include <QTcpSocket>
+#include <QSerialPort>
 #include <QString>
 #include <QTimer>
 
 #define CONTROL_LINK_COMMAND_TIMEOUT    1000
 #define CONTROL_LINK_RECONNECT_PERIOD   1000
+#define CONTROL_LINK_SERIAL_BAUDRATE    115200
+
+/* Transport used by the control link */
+typedef enum{
+    CONTROL_LINK_TRANSPORT_TCP,     /*!< EPP devices over TCP/IP (binary 0xA5 framing) */
+    CONTROL_LINK_TRANSPORT_SERIAL   /*!< Charger device over USB CDC serial (text, \r terminated) */
+}control_link_transport_t;
 
 typedef enum{
     CONTROL_LINK_STATUS_ESTABLISHED,
@@ -22,6 +30,7 @@ public:
     explicit ControlLink(QObject *parent = nullptr);
     ~ControlLink();
     control_link_status_t   establishLink(QString aIpAddress, QString aPortNumber);
+    control_link_status_t   establishSerialLink(QString aPortName, qint32 aBaudRate = CONTROL_LINK_SERIAL_BAUDRATE);
     bool                    getDeviceName(QString* deviceName);
     bool                    executeCommand(QString command, QString* response, int timeout);
     bool                    executeCommand(QByteArray request, QString* response, int timeout);
@@ -37,17 +46,22 @@ public slots:
     void                    onDisconnected();
     void                    onReconnected();
     void                    reconnect();
+    void                    onSerialErrorOccurred(QSerialPort::SerialPortError error);
 
 private:
 
     QTcpSocket              *tcpSocket;
+    QSerialPort             *serialPort;
+    control_link_transport_t transport;
     QString                 ipAddress;
+    QString                 serialPortName;
     quint16                 portNumber;
     control_link_status_t   linkStatus;
     QTimer                  *reconnectTimer;
 
     bool                    setSocketKeepAlive();
     bool                    prvReadResponse(QString* response, int timeout);
+    bool                    prvReadSerialResponse(QString* response, int timeout);
 
 };
 
